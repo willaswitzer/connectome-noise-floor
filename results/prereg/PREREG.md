@@ -42,6 +42,7 @@ The sugar-GRN → MN9 validation is a single-dataset FlyWire reproduction check,
 - **Stimulus:** right-hemisphere labellar sugar GRNs, FlyWire type LB3 (unit 4935 in `units_v2_flywire_neurons.csv`), root IDs listed in `Drosophila_brain_model/example.ipynb` cell 3 / `figures.ipynb`. 20 of 21 root IDs matched our annotation release; one (720575940620900446) was not found and needs checking against the annotation version used.
 - **Readout:** MN9, FlyWire type CB0701 (unit 1436), root ID 720575940660219265 (used in `example.ipynb` cell 17, target: 67.0 Hz at 100 Hz sugar stimulation). A second candidate ID (720575940645521262) appears once in `figures.ipynb` cell 17 as "right" but is inconsistent with other notebook comments — use ...219265 as primary and treat the second as a robustness check if time allows.
 - **Pass criterion:** LIF model reproduces ~67 Hz MN9 firing rate at 100 Hz sugar-GRN stimulation before proceeding to Week 6–8 cross-connectome runs.
+- **Result (Sep 21, 2026):** reproduced. MN9 fired at 66.43 Hz at 100 Hz sugar-GRN stimulation (target: 67.0 Hz, per example.ipynb cell 17), within expected tolerance given brian2 2.10.1/numpy 2.5 vs. the pinned 2.5.1/1.24 environment. Individual silencing of the 3 most active sugar GRNs gave 64.70, 68.73, 70.50 Hz — non-monotonic, which is worth a second look before relying on single-neuron ablation results, but doesn't affect the baseline pass criterion.
 
 ## Neurotransmitter sign assignment
 
