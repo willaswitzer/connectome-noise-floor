@@ -52,3 +52,84 @@ Every neuron in the simulation needs a sign, assigned in this priority order:
 2. **Fallback:** for a neuron without that, the majority `top_nt` among other `used_in_analysis == True` neurons of the same type.
 3. **Deeper fallback:** if no `used_in_analysis` neuron exists anywhere in that type, the majority of any named `conf_nt` (excluding "unknown") across all matched neurons of that type — tag the unit's sign as low-confidence in output.
 4. If a type has zero named calls at all, it has no assignable sign and is excluded — never defaulted to a guessed transmitter.
+
+## Amendment 1 — 2026-09-22 (before any results)
+
+**Status at time of amendment:** No cross-connectome or error-injection results have been computed or viewed. The only model run so far is the Shiu `example.ipynb` environment check on FlyWire v630, which does not touch the analysis targets. Everything below is pre-registered. The original decisions 1–5 still stand unless a section below changes them.
+
+**Reason:** The project scope expanded (rev. 2, Sep 22). The noise-ceiling study becomes Arm 1, and a reconstruction-error arm (Arm 2) is added. Arm 2 is compared against Arm 1's cross-animal disagreement.
+
+---
+
+### A1.1 Comparison hierarchy (replaces the H4 framing)
+
+All comparisons are made at the **matched cell-type level**, using the same units and readouts in both arms.
+
+| Rung | Pair | Varies | Units |
+|---|---|---|---|
+| R0 | FlyWire left vs. FlyWire right | hemisphere only (same animal, same pipeline) | FlyWire types present on both sides |
+| R1 | FlyWire vs. male CNS | individual, pipeline, sex | `build_units_v2.py` (7,579 units) |
+| R2 | FlyWire vs. hemibrain | individual, pipeline (both female) | `build_unit_hemibrain_map.py` |
+| R3 (exploratory) | hemibrain vs. male CNS | individual, pipeline, sex | via FlyWire-type bridge |
+
+**H4 (revised):** Replicability ranks R0 > R2 > R1, per model and per readout. The test is a paired comparison over the targets shared by each pair of rungs, with the same permutation baseline as H1.
+
+**Interpretation limits (pre-stated):**
+- R0 contains hemisphere asymmetry *and* left/right type-matching noise. It is not a pure noise floor.
+- The R1 and R2 gaps mix biology, reconstruction pipeline, and matching error. We do not attribute them to biology alone.
+- R1 additionally includes sex. Units flagged as sexually dimorphic or sex-specific stay excluded, as in the original decision. Known dimorphic circuits are reported separately.
+
+### A1.2 Coverage per pair
+
+Each target in `targets_DRAFT.csv` gets a coverage flag for R0, R1, and R2. A target enters a rung's analysis only if **both** its seed type and ≥90% of its readout units lie inside both datasets' reconstructed volumes. <!-- CHECK: is 90% the right threshold? Pick before running. -->
+
+- **Hemibrain:** the volume is taken from its ROI list. If the SEZ is outside it (to verify), sugar GRN → MN9 is excluded from R2.
+- **Reporting:** the paper reports the target count for each rung. The draw itself is **not** redone.
+
+### A1.3 Global synaptic weight (Wsyn)
+
+Both conditions are pre-registered, and both are reported:
+- **(a) Fixed:** Wsyn is held at the FlyWire-calibrated value on every connectome. This is the **primary** condition.
+- **(b) Recalibrated:** Wsyn is re-tuned per connectome, using the same calibration target (sugar → MN9 rate). It is applied only on connectomes that contain the circuit. Otherwise it is matched to FlyWire's median firing rate over a fixed stimulus set. <!-- CHECK: fallback calibration target acceptable? -->
+
+If (a) and (b) disagree in the ordering of the rungs, the disagreement is reported as a main-text caveat.
+
+### A1.4 Edge weights
+
+- **Primary:** normalized input fractions, meaning synapses from i to j divided by the total input synapses onto j, within each dataset.
+- **Sensitivity check:** raw synapse counts.
+
+**Resolved against the existing weight spec:** the pre-amendment spec uses raw synapse counts as the connection weight — `model.py` sets `syn.w = df_con['Excitatory x Connectivity'] * w_syn`, i.e. weight scales linearly with raw synapse count per edge, and the Metric section's conserved-edge filter also thresholds on raw counts (`>10 synapses`). **This amendment changes the primary weight metric**: normalized input fractions become primary, and raw synapse counts move from the implicit default to the sensitivity check. Everything already run (the Shiu checkpoint) used raw-count weighting and is unaffected, since it predates this amendment and is a single-dataset reproduction check, not a cross-connectome target.
+
+### A1.5 Model assumptions (stated, not tested)
+
+The LIF model has zero basal firing and no gap junctions. Its E/I sign comes from predicted neurotransmitter via the four-tier rule. The linear model shares the sign rule. These are named in the paper as the main structure-to-function limitation.
+
+### A1.6 Readouts (shared by both arms)
+
+1. **Primary (unchanged):** Spearman correlation of response vectors per stratum.
+2. **Secondary:** sign and magnitude agreement for named downstream targets, including sugar → MN9 where covered.
+3. **Secondary:** rank agreement of the top-k responding cell types. k = 20 is primary, and k = 10 and 50 are sensitivity checks. <!-- CHECK: k choice -->
+
+### A1.7 H3 (sign ablation), scope clarified
+
+H3 stays in Arm 1 as a within-model sanity check. The formal comparison of sign errors against cross-animal disagreement is done in Arm 2 (neurotransmitter-mislabel condition) and is not double-counted.
+
+### A1.8 Arm 2 (stub; must be completed and committed before any Arm 2 output is viewed)
+
+**Reference connectome:** FlyWire v783. The sweep measures sensitivity to errors *added on top of* FlyWire's residual errors.
+
+| Error type | Unit of rate | Injection rule |
+|---|---|---|
+| False merge | merges per 1,000 neurons | join the synapse lists of same-neuropil or spatially adjacent pairs |
+| False split | splits per 1,000 neurons | divide synapses by a spatial cut |
+| Missed synapse | fraction of synapses removed | biased toward weak edges |
+| Spurious synapse | fraction of synapses added | added between spatially co-located pairs |
+| NT mislabel | fraction of neurons with a flipped sign | weighted by low prediction confidence |
+| Section loss (optional) | slab thickness | split all neurites crossing the slab |
+
+- Each type is swept separately, then combined. There are ≥5 seeds per rate.
+- The "realistic" anchor for each type is fixed from a published source before any results. <!-- TODO: fill in citations and values -->
+- **Break-even rate:** the rate at which the median drift (1 − readout agreement against unperturbed FlyWire) equals the R0, R1, and R2 disagreement. It is reported per error type, model, and readout, with bootstrap CIs over targets.
+
+**Real-error condition:** FlyWire v630 vs. v783, run on the **same synapse table**. If the synapse tables can't be matched, this condition is dropped and reported as a limitation.
