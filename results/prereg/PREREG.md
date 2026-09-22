@@ -33,6 +33,7 @@ For each target unit and each dataset pair (male CNS–FlyWire for all 134 targe
 - `hb_share` is a type-matching estimate, not yet checked against real hemibrain connectivity — re-verify once hemibrain data is fetched.
 - Reported run count (326) covers dataset×target combinations only, not the additional multiples from model class, edge-filtering, and sign-ablation conditions.
 - Resolved: the Shiu checkpoint pair is not among the 134 targets (see Week 5 checkpoint section) — it runs as a standalone single-dataset validation.
+- `build_units_v2.py`'s hb2ct matching does not split comma-joined hemibrain_type strings; measured impact is 3 of 7,579 candidate units changing membership (2 of 6,903 primary) and 5 new units, affecting 0 of the 134 draft targets. Left unfixed since the cost of touching a pre-registered artifact outweighs the near-zero effect on the actual target set.
 
 ## Week 5 checkpoint (Shiu reproduction)
 
