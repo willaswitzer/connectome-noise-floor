@@ -377,3 +377,15 @@ Drawn targets affected: R1-6, R7, HBeyelet.
 **Sensitivity:** predictions only (tiers 1–4, no tier 0). For FlyWire this is close to
 Shiu et al.'s per-neuron convention. The Week-5 checkpoint used Shiu's `Excitatory` column
 and is unaffected; A3.4 applies to all new runs of both models.
+
+## Implementation notes (append-only; not amendments)
+
+- **2026-09-28, first linear run (commit 687afaf), recorded from `manifest.json` seed counts only;
+  no correlations computed or viewed.** Target HBeyelet (unit 4656, Tier B) has 4 left and 2 right
+  FlyWire neurons in annotations v3.0.0, but the 2 right neurons have no synapses in the Buhmann
+  table, so they are not graph nodes. R0 eligibility (A2.4) was computed from annotations, not graph
+  nodes. HBeyelet therefore has an empty right-side seed. Per A2.3, R0 and R2-right are NA for
+  this target and counted as such: R0 covers 133 of 134 targets, and the R2 right-side sensitivity
+  covers 57 of 58 Tier B targets. R1 and R2 primary are unaffected.
+- Unit 4383 (DNge153, not a target) has no FlyWire graph node, so the FlyWire R1 readout has
+  7,578 of 7,579 units. It drops out of the shared-unit set for any comparison involving FlyWire.
