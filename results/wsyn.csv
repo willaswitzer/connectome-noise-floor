@@ -1,0 +1,5 @@
+dataset,n_matched_edges,median_flywire,median_dataset,wsyn_mV
+flywire,,,,0.275
+male_cns,140966.0,11.0,16.0,0.18906250000000002
+hemibrain,53320.0,12.4,13.0,0.26230769230769235
+flywire_princeton,165762.0,10.25,12.2,0.23104508196721313
