@@ -9,7 +9,9 @@ connected pair, so it does not scale with how many neurons each dataset puts in 
 Matched edge = unit pair (u != v) present in both datasets and passing the conserved-edge
 filter in both: strength > 10 synapses OR total u->v synapses >= 1% of v's total input
 from matched units.
-Structural only: reads no simulation output. Run after build_matched_graphs.py.
+Hemibrain is compared on R2 units (A2.8) in both FlyWire and hemibrain; the other
+datasets use the original units. Structural only: reads no simulation output.
+Run after build_r2_units.py and build_matched_graphs.py.
 
 Output: results/wsyn.csv"""
 import pandas as pd
@@ -18,8 +20,10 @@ G = "data/derived/graphs"
 W_REF = 0.275  # mV, Shiu et al. 2024
 
 
-def unit_edges(path):
-    e = pd.read_parquet(path, columns=["weight", "unit_id_pre", "unit_id_post"]).dropna()
+def unit_edges(path, level="unit_id"):
+    pre, post = (f"{level}_pre", f"{level}_post") if level == "unit_id" else ("r2_unit_pre", "r2_unit_post")
+    e = pd.read_parquet(path, columns=["weight", pre, post]).dropna()
+    e = e.rename(columns={pre: "unit_id_pre", post: "unit_id_post"})
     e = e[e["unit_id_pre"] != e["unit_id_post"]]
     g = e.groupby(["unit_id_pre", "unit_id_post"])["weight"].agg(total="sum", n_pairs="size")
     g["strength"] = g["total"] / g["n_pairs"]
@@ -35,10 +39,10 @@ def rescale(ref, other):
     return len(j), m_ref, m_k, W_REF * m_ref / m_k
 
 
-fw = unit_edges(f"{G}/flywire.parquet")
-rows = [("flywire", len(fw), None, None, W_REF)]
-for name in ["male_cns", "hemibrain", "flywire_princeton"]:
-    n, m_ref, m_k, w = rescale(fw, unit_edges(f"{G}/{name}.parquet"))
+fw = {lvl: unit_edges(f"{G}/flywire.parquet", lvl) for lvl in ["unit_id", "r2"]}
+rows = [("flywire", None, None, None, W_REF)]
+for name, lvl in [("male_cns", "unit_id"), ("hemibrain", "r2"), ("flywire_princeton", "unit_id")]:
+    n, m_ref, m_k, w = rescale(fw[lvl], unit_edges(f"{G}/{name}.parquet", lvl))
     rows.append((name, n, m_ref, m_k, w))
     print(f"{name}: matched conserved edges={n:,}  median FW={m_ref:.2f}  median {name}={m_k:.2f}  "
           f"Wsyn={w:.4f} mV")
