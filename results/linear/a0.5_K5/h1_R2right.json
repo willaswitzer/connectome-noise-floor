@@ -8,7 +8,7 @@
   0.18023556222008152
  ],
  "p_one_sided": 0.000999000999000999,
- "label_shuffle_null_median_rho": NaN,
+ "label_shuffle_null_median_rho": 0.00010095176965443048,
  "perms": 1000,
  "rng_seed": 20260928
 }

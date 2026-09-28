@@ -522,3 +522,9 @@ In the rectified model, flipping a seed neuron's sign to inhibitory zeroes the w
 invisible. The NT-mislabel curve would therefore partly measure the rectifier. A1.8 must choose,
 before any injector exists, between (a) excluding seed-unit flips from drift, and (b) running the
 NT-mislabel condition on the unrectified model (A5.2).
+- **2026-09-28, Amendment-5 run (commit 5f91290).** New empty seeds, read from `manifest.json`:
+  DNpe020 (unit 4469) has no male CNS neurons with a side label (`somaSide`/`rootSide` both
+  missing), so it is NA on R1ipsi_left, R1ipsi_right and R1half. Case-study VP2_hot_PN has a
+  single male CNS neuron (left side), so it is NA on R1ipsi_right. R0ipsi inherits the HBeyelet
+  NA. The RuntimeWarning "Mean of empty slice" printed during the run comes from targets whose
+  label-shuffle null is all NaN (constant vectors). It is harmless and does not affect any ρ or p.
