@@ -51,6 +51,14 @@ def r0_reindex(df, stim_side):
     return out
 
 
+def side_rows(df, side):
+    """rows '<unit>|<side>' -> '<unit>' for one side only."""
+    keep = df.index.str.endswith("|" + side)
+    out = df[keep].copy()
+    out.index = out.index.str.split("|").str[0]
+    return out
+
+
 def analyze(A, B, seed_rows, draw_keys, perms, rng):
     """A, B: DataFrames rows x perturbations (same columns); seed_rows: key -> set of row labels."""
     idx = A.index.intersection(B.index)
@@ -100,6 +108,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cond", default="a0.5_K5")
     ap.add_argument("--perms", type=int, default=1000)
+    ap.add_argument("--rungs", default="", help="comma-separated subset, e.g. R0ipsi,R1ipsi_right")
     args = ap.parse_args()
     D, OUT = Path(f"data/derived/linear/{args.cond}"), Path(f"results/linear/{args.cond}")
     OUT.mkdir(parents=True, exist_ok=True)
@@ -126,7 +135,23 @@ def main():
         "R0": (r0_reindex(rd("R0_flywire_left"), "left"), r0_reindex(rd("R0_flywire_right"), "right"),
                {k: {f"{u}|{s}" for u in v for s in ("ipsi", "contra")} for k, v in units.items()}, draw_all),
     }
+    # A5.3: like-for-like forms (one-sided stimulation, stimulated-side readout) and control
+    if (D / "half_flywire_left.parquet").exists():
+        us = {k: {str(u) for u in v} for k, v in units.items()}
+        hfl, hfr = rd("half_flywire_left"), rd("half_flywire_right")
+        hml, hmr = rd("half_male_cns_left"), rd("half_male_cns_right")
+        rungs.update({
+            "R0ipsi": (side_rows(hfl, "left"), side_rows(hfr, "right"), us, draw_all),
+            "R1ipsi_right": (side_rows(hfr, "right"), side_rows(hmr, "right"), us, draw_all),
+            "R1ipsi_left": (side_rows(hfl, "left"), side_rows(hml, "left"), us, draw_all),
+            "R1half": (r0_reindex(hfl, "left"), r0_reindex(hml, "left"),
+                       {k: {f"{u}|{s}" for u in v for s in ("ipsi", "contra")} for k, v in units.items()},
+                       draw_all),
+        })
+    only = set(args.rungs.split(",")) if args.rungs else None
     for name, (A, B, seeds, draw) in rungs.items():
+        if only and name not in only:
+            continue
         cols = [c for c in A.columns if c in B.columns]
         rho, h1 = analyze(A[cols], B[cols], seeds, draw, args.perms, rng)
         rho.to_csv(OUT / f"rho_{name}.csv", index=False)

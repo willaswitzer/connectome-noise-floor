@@ -24,8 +24,9 @@ p = argparse.ArgumentParser()
 p.add_argument("--alpha", type=float, default=0.5)
 p.add_argument("--K", type=int, default=5)
 p.add_argument("--batch", type=int, default=50)
+p.add_argument("--no-rectify", action="store_true", help="unrectified sensitivity model (A5.2)")
 args = p.parse_args()
-OUT = Path(f"data/derived/linear/a{args.alpha}_K{args.K}")
+OUT = Path(f"data/derived/linear/a{args.alpha}_K{args.K}" + ("_norect" if args.no_rectify else ""))
 OUT.mkdir(parents=True, exist_ok=True)
 
 # ---------- perturbations ----------
@@ -48,7 +49,7 @@ r2sets = {k: {int(r2map[x]) for x in perts[k]} for k in r2_perts}
 
 side = pd.read_csv("data/flywire_783/annotations_v3_neurons.tsv", sep="\t",
                    usecols=["root_id", "side"], low_memory=False).set_index("root_id")["side"]
-manifest = {"alpha": args.alpha, "K": args.K, "started": time.strftime("%Y-%m-%d %H:%M:%S"),
+manifest = {"alpha": args.alpha, "K": args.K, "rectify": not args.no_rectify, "started": time.strftime("%Y-%m-%d %H:%M:%S"),
             "git": subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True,
                                   text=True).stdout.strip(),
             "seed_neurons": {}, "empty_seeds": {}}
@@ -61,7 +62,7 @@ def run(g, name, keys, seed_sets, labels):
     manifest["empty_seeds"][name] = [k for k, s in zip(keys, seeds) if len(s) == 0]
     cols = []
     for i in range(0, len(keys), args.batch):
-        R = propagate(g.A, seeds[i:i + args.batch], args.alpha, args.K)
+        R = propagate(g.A, seeds[i:i + args.batch], args.alpha, args.K, rectify=not args.no_rectify)
         cols.append(unit_means(R, labels))
     df = pd.concat(cols, axis=1)
     df.columns = keys
@@ -92,11 +93,25 @@ lab0 = pd.Series([f"{a}|{b}" if (pd.notna(a) and int(a) in r0units and b in ("le
                   for a, b in zip(u, sd)], dtype=object)
 for s in ("left", "right"):
     run(g, f"R0_flywire_{s}", keys, [isin(u, perts[k]) & (sd == s) for k in keys], lab0)
+# A5.3: one-sided stimulation, readout split by side, all units (R0-ipsi, R1-ipsi, R1-half)
+labh = pd.Series([f"{int(a)}|{b}" if (pd.notna(a) and b in ("left", "right")) else None
+                  for a, b in zip(u, sd)], dtype=object)
+for s in ("left", "right"):
+    run(g, f"half_flywire_{s}", keys, [isin(u, perts[k]) & (sd == s) for k in keys], labh)
 del g
 
 # ---------- male CNS: R1 ----------
 g = load_graph("male_cns")
 run(g, "R1_male_cns", keys, [isin(num(g.unit), perts[k]) for k in keys], g.unit)
+ma = pd.read_feather("data/male_cns/body-annotations-male-cns-v1.0-minconf-0.5.feather",
+                     columns=["bodyId", "somaSide", "rootSide"]).set_index("bodyId")
+mside = ma["somaSide"].where(ma["somaSide"].isin(["L", "R"]), ma["rootSide"].where(ma["rootSide"].isin(["L", "R"])))
+msd = pd.Series(g.ids).map(mside).map({"L": "left", "R": "right"}).to_numpy()
+mu = num(g.unit)
+labm = pd.Series([f"{int(a)}|{b}" if (pd.notna(a) and b in ("left", "right")) else None
+                  for a, b in zip(mu, msd)], dtype=object)
+for s in ("left", "right"):
+    run(g, f"half_male_cns_{s}", keys, [isin(mu, perts[k]) & (msd == s) for k in keys], labm)
 del g
 
 # ---------- hemibrain: R2 ----------

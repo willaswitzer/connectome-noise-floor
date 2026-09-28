@@ -62,8 +62,10 @@ def load_graph(name, sign_col="sign"):
                  node_map("r2_unit_pre", "r2_unit_post"))
 
 
-def propagate(A, seeds, alpha=0.5, K=5):
-    """seeds: list of arrays of node indices (one per perturbation). Returns N x B array R."""
+def propagate(A, seeds, alpha=0.5, K=5, rectify=True):
+    """seeds: list of arrays of node indices (one per perturbation). Returns N x B array R.
+    rectify=False is the unrectified sensitivity model (Amendment 5): negative values are
+    kept as suppression."""
     n, B = A.shape[0], len(seeds)
     r = np.zeros((n, B))
     for b, idx in enumerate(seeds):
@@ -71,7 +73,9 @@ def propagate(A, seeds, alpha=0.5, K=5):
     R = np.zeros_like(r)
     AT = A  # A is post x pre, so A @ r gives input to each post neuron
     for _ in range(K):
-        r = np.maximum(0.0, alpha * (AT @ r))
+        r = alpha * (AT @ r)
+        if rectify:
+            r = np.maximum(0.0, r)
         R += r
     return R
 

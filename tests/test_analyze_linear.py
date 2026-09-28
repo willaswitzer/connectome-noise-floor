@@ -43,3 +43,9 @@ def test_constant_vector_reason():
     a = np.zeros(20); b = np.arange(20.)
     r, n, why = pair_rho(a, b, np.zeros(20, bool))
     assert np.isnan(r) and why == "constant_vector"
+
+
+def test_side_rows():
+    from analyze_linear import side_rows
+    df = pd.DataFrame({"x": [1, 2, 3]}, index=["5|left", "5|right", "7|left"])
+    assert list(side_rows(df, "left").index) == ["5", "7"]

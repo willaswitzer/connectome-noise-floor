@@ -32,3 +32,12 @@ def test_unit_means():
     R = np.array([[1., 0.], [3., 2.], [5., 4.]])
     out = unit_means(R, pd.array([7, 7, pd.NA], dtype="Int64"))
     assert out.loc[7].tolist() == [2.0, 1.0]
+
+
+def test_unrectified_keeps_suppression():
+    pre = np.array([0, 1]); post = np.array([1, 2]); w = np.array([1., 1.])
+    sign = np.array([-1., 1., 1.])  # inhibitory seed 0 -> 1 -> 2
+    A = build_operator(pre, post, w, sign, 3)
+    R = propagate(A, [np.array([0])], alpha=1.0, K=2, rectify=False)[:, 0]
+    assert np.allclose(R, [0, -1, -1])
+    assert np.allclose(propagate(A, [np.array([0])], alpha=1.0, K=2)[:, 0], 0)
