@@ -281,3 +281,99 @@ with no hemibrain neurons (LC10d, LC26, OCG01c, VST1, DNp41) and shrinks a sixth
   R2 units merge more than one original unit.
 - This is distinct from the `build_units_v2.py` hb2ct comma-join limitation already
   in PREREG (3 of 7,579 units). That limitation stands.
+
+## Amendment 3 — 2026-09-28 (before any results)
+
+**Status at time of amendment.** Unchanged from Amendment 2. No linear-model, cross-connectome
+or error-injection output exists. Counts below come from annotation and matching tables only.
+
+**Reason.** (1) Add a named case-study set alongside the 134-target draw, to support the
+named-target readout (A1.6 item 2) and interpretable figures. (2) State how the case-study set
+overlaps the draw and how that overlap is counted. (3) State that readouts are brain-only in
+every cross-dataset comparison. (4) Fix a sign-rule gap: A2.1 treats histamine as excitatory,
+and the four-tier rule's tier-1 column (`used_in_analysis`) exists only in the hemibrain table.
+
+### A3.1 Case-study set (secondary; fixed names)
+
+Seeds are fixed FlyWire v783 cell types (annotations v3.0.0). A seed with several types
+stimulates all of them together. Male CNS and hemibrain seeds are the matched units
+(R1, R0) or R2 units (R2) containing those types.
+
+| Name | Seed types | Named readout |
+|---|---|---|
+| sugar_GRN | LB3 | MN9 (CB0701) |
+| bitter_GRN | LB1a,LB1d; LB1b; LB1c; LB1e | MN9 (CB0701) |
+| DA1_uPN | DA1_lPN | none |
+| DM1_uPN | DM1_lPN | none |
+| DC1_uPN | DC1_adPN | none |
+| VA1v_uPN | VA1v_adPN | none |
+| LC4 | LC4 | DNp01, DNp02, DNp11 |
+| LPLC2 | LPLC2 | DNp01, DNp02, DNp11 |
+| LC6 | LC6 | none |
+| LC10a | LC10a | DNa02 |
+| JO-A | JO-A1–A4 | none |
+| JO-CE | all JO-C* and JO-E* types (14) | none |
+| VP2_hot_PN | VP2_adPN | none |
+| VP4_dry_PN | VP4_vPN | none |
+
+- A separate water GRN is not included, because FlyWire v783 types sugar and water GRNs together (LB3,
+  sub-class "sugar/water").
+- Named readouts are reported as the response of that unit, with sign agreement across
+  datasets (A1.6 item 2). Perturbations without a named readout use items 1 and 3 only.
+- **Coverage per rung.** R1: 14 of 14. R0: 14 of 14 (every seed has neurons on both sides).
+  R2: 10 of 14. sugar_GRN, bitter_GRN, JO-A and JO-CE have no hemibrain neurons and are
+  excluded. MN9 has no hemibrain neurons, so the gustatory named readout exists only
+  on R0 and R1.
+- **Role.** The case-study set is descriptive. It does not enter H1–H4, their permutation
+  baselines, or the primary break-even rates. Break-even rates for the case-study set are
+  reported as secondary. It is also the fixed short list for LIF runs in Arm 2.
+
+### A3.2 Overlap with the 134-target draw
+
+- **bitter_GRN** contains two drawn targets, `LB1a,LB1d` and `LB1c`. The case-study run
+  stimulates all four LB1 types together, so it is a different run from either drawn target.
+- **LC10a** is not drawn, but its R2 unit (4937, which merges LC10a–f) also contains the drawn
+  targets LC10b and LC10d. On R2, those three stimulate the same R2 unit, so it is one run,
+  reported once and labelled with all three names.
+- No other case-study seed shares a unit or an R2 unit with a drawn target.
+- **Counting.** H1–H4 are computed on the 134 drawn targets only. Case-study results are never
+  pooled with them. For LC10b and LC10d on R2, the shared run counts once per drawn target, as
+  the draw already specified.
+
+### A3.3 Brain-only readout in every cross-dataset comparison
+
+- The readout vector contains only matched units (A2.1). No matched male CNS neuron has a VNC
+  superclass (0 of 139,980), and FlyWire and hemibrain have no VNC. So the readout is
+  brain cell types in every comparison. This is stated in the methods.
+- In the primary male CNS graph (A2.7), VNC neurons are not nodes. Descending-neuron outputs and
+  ascending-neuron inputs are cut at the neck, as they are in FlyWire and hemibrain.
+- In the whole-CNS sensitivity graph, VNC neurons propagate activity but are never read out.
+  Any primary-vs-sensitivity difference is reported separately for the descending (38) and
+  ascending (24) strata, because those strata are where VNC loops can act.
+
+### A3.4 Transmitter sign, per dataset (replaces the sign sentence in A2.1)
+
+**Transmitter → sign.** Acetylcholine, dopamine, serotonin and octopamine give +1. GABA,
+glutamate and histamine give −1. Histamine is inhibitory in Drosophila (HisCl channels), and
+A2.1 wrongly assigned it +1. The male CNS predictor has a histamine class and FlyWire's does
+not, so without a shared rule the same types would get opposite signs across datasets.
+Drawn targets affected: R1-6, R7, HBeyelet.
+
+**Tiers** (applied per neuron; the first tier that gives a transmitter wins):
+0. **Known transmitter (type-level, shared across datasets).** If the unit has a known
+   transmitter, it is used for that unit's neurons in all three datasets. The known
+   transmitter comes from the majority of FlyWire `known_nt` among member neurons, or, if that
+   is absent, from the majority of male CNS `ground_truth`. Entries naming two different
+   classical transmitters, and "-negative" entries, are ignored. If FlyWire and male CNS
+   disagree, tier 0 is skipped.
+1. **Neuron-level prediction passing the dataset's own QC.** Hemibrain: `top_nt` where
+   `used_in_analysis` (unchanged). FlyWire: `top_nt` where `top_nt_conf` ≥ 0.5 (82.5% of
+   neurons). Male CNS: `predicted_nt` where `predicted_nt_confidence` ≥ 0.5. The two confidence
+   scales are not calibrated to each other; 0.5 is a floor, not an equivalence.
+2. **Type majority** of tier-1 calls in the same dataset (unchanged).
+3. **Type majority** of any named prediction in the same dataset, flagged low-confidence (unchanged).
+4. No sign: excluded from propagation (s = 0), as in A2.1.
+
+**Sensitivity:** predictions only (tiers 1–4, no tier 0). For FlyWire this is close to
+Shiu et al.'s per-neuron convention. The Week-5 checkpoint used Shiu's `Excitatory` column
+and is unaffected; A3.4 applies to all new runs of both models.
