@@ -37,3 +37,9 @@ def test_matched_beats_mismatched_on_synthetic():
     rho, h1 = analyze(A, B, {k: set() for k in A.columns}, list(A.columns), 200, rng)
     assert h1["observed_median_rho"] > 0.9 and h1["p_one_sided"] < 0.01
     assert abs(h1["label_shuffle_null_median_rho"]) < 0.1
+
+
+def test_constant_vector_reason():
+    a = np.zeros(20); b = np.arange(20.)
+    r, n, why = pair_rho(a, b, np.zeros(20, bool))
+    assert np.isnan(r) and why == "constant_vector"

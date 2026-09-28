@@ -31,7 +31,8 @@ def pair_rho(a, b, exclude):
     n = int(keep.sum())
     if n < MIN_ROWS:
         return np.nan, n, "lt10_rows"
-    return spearman(a[keep], b[keep]), n, ""
+    r = spearman(a[keep], b[keep])
+    return r, n, ("constant_vector" if np.isnan(r) else "")
 
 
 def derangement(n, rng):
@@ -83,7 +84,9 @@ def analyze(A, B, seed_rows, draw_keys, perms, rng):
         if keep.sum() < MIN_ROWS:
             continue
         aa, bb = a[keep], b[keep]
-        label_null.append(np.mean([spearman(aa, rng.permutation(bb)) for _ in range(perms)]))
+        v = np.nanmean([spearman(aa, rng.permutation(bb)) for _ in range(perms)])
+        if not np.isnan(v):
+            label_null.append(v)
     h1 = {"n_targets": int(obs.notna().sum()), "n_na": int(obs.isna().sum()),
           "observed_median_rho": observed,
           "null_median_q025_q50_q975": [float(x) for x in np.quantile(null, [.025, .5, .975])],
