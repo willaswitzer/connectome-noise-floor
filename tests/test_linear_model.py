@@ -41,3 +41,13 @@ def test_unrectified_keeps_suppression():
     R = propagate(A, [np.array([0])], alpha=1.0, K=2, rectify=False)[:, 0]
     assert np.allclose(R, [0, -1, -1])
     assert np.allclose(propagate(A, [np.array([0])], alpha=1.0, K=2)[:, 0], 0)
+
+
+def test_edge_filter_keeps_unfiltered_denominator():
+    from linear_model import edge_filter_mask
+    # onto node 2: 0->2 has 20 syn, 1->2 has 1 syn of 2000 total input (0.05%)
+    pre = np.array([0, 1, 3]); post = np.array([2, 2, 2]); w = np.array([20., 1., 1979.])
+    keep = edge_filter_mask(post, w, 4)
+    assert keep.tolist() == [True, False, True]
+    A = build_operator(pre, post, w, np.ones(4), 4, keep=keep)
+    assert np.isclose(A[2, 0], 20 / 2000) and A[2, 1] == 0

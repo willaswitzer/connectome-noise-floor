@@ -25,8 +25,12 @@ p.add_argument("--alpha", type=float, default=0.5)
 p.add_argument("--K", type=int, default=5)
 p.add_argument("--batch", type=int, default=50)
 p.add_argument("--no-rectify", action="store_true", help="unrectified sensitivity model (A5.2)")
+p.add_argument("--edge-filter", action="store_true", help="H2: >10 synapses or >=1%% of input (A6.1)")
+p.add_argument("--sign-ablate", action="store_true", help="H3: every neuron excitatory (A6.2)")
 args = p.parse_args()
-OUT = Path(f"data/derived/linear/a{args.alpha}_K{args.K}" + ("_norect" if args.no_rectify else ""))
+OUT = Path(f"data/derived/linear/a{args.alpha}_K{args.K}" + ("_norect" if args.no_rectify else "")
+           + ("_ef" if args.edge_filter else "") + ("_signabl" if args.sign_ablate else ""))
+GKW = {"edge_filter": args.edge_filter, "sign_ablate": args.sign_ablate}
 OUT.mkdir(parents=True, exist_ok=True)
 
 # ---------- perturbations ----------
@@ -49,7 +53,7 @@ r2sets = {k: {int(r2map[x]) for x in perts[k]} for k in r2_perts}
 
 side = pd.read_csv("data/flywire_783/annotations_v3_neurons.tsv", sep="\t",
                    usecols=["root_id", "side"], low_memory=False).set_index("root_id")["side"]
-manifest = {"alpha": args.alpha, "K": args.K, "rectify": not args.no_rectify, "started": time.strftime("%Y-%m-%d %H:%M:%S"),
+manifest = {"alpha": args.alpha, "K": args.K, "rectify": not args.no_rectify, **GKW, "started": time.strftime("%Y-%m-%d %H:%M:%S"),
             "git": subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True,
                                   text=True).stdout.strip(),
             "seed_neurons": {}, "empty_seeds": {}}
@@ -79,7 +83,7 @@ num = lambda ser: ser.to_numpy(dtype="float64", na_value=np.nan)
 isin = lambda arr, s: np.isin(arr, list(s))
 
 # ---------- FlyWire: R1, R2, R2right, R0 ----------
-g = load_graph("flywire")
+g = load_graph("flywire", **GKW)
 u, r2 = num(g.unit), num(g.r2)
 sd = pd.Series(g.ids).map(side).to_numpy()
 run(g, "R1_flywire", keys, [isin(u, perts[k]) for k in keys], g.unit)
@@ -101,7 +105,7 @@ for s in ("left", "right"):
 del g
 
 # ---------- male CNS: R1 ----------
-g = load_graph("male_cns")
+g = load_graph("male_cns", **GKW)
 run(g, "R1_male_cns", keys, [isin(num(g.unit), perts[k]) for k in keys], g.unit)
 ma = pd.read_feather("data/male_cns/body-annotations-male-cns-v1.0-minconf-0.5.feather",
                      columns=["bodyId", "somaSide", "rootSide"]).set_index("bodyId")
@@ -115,7 +119,7 @@ for s in ("left", "right"):
 del g
 
 # ---------- hemibrain: R2 ----------
-g = load_graph("hemibrain")
+g = load_graph("hemibrain", **GKW)
 run(g, "R2_hemibrain", r2_perts, [isin(num(g.r2), r2sets[k]) for k in r2_perts], g.r2)
 del g
 
