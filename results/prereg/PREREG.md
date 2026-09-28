@@ -389,3 +389,49 @@ and is unaffected; A3.4 applies to all new runs of both models.
   covers 57 of 58 Tier B targets. R1 and R2 primary are unaffected.
 - Unit 4383 (DNge153, not a target) has no FlyWire graph node, so the FlyWire R1 readout has
   7,578 of 7,579 units. It drops out of the shared-unit set for any comparison involving FlyWire.
+
+## Amendment 4 — 2026-09-28 (before any correlation is computed)
+
+**Status at time of amendment.** Linear-model response vectors for the primary condition
+(α = 0.5, K = 5) have been written to `data/derived/linear/a0.5_K5/` (commit 687afaf).
+Only `manifest.json` seed counts have been read (see Implementation notes). No response
+values, correlations or summary statistics have been computed or viewed.
+
+**Reason.** H1 names a "label-shuffled permutation baseline" without defining the shuffle,
+and the analysis steps between response vectors and H1 are not fully specified.
+
+### A4.1 Comparison per target and rung
+
+For target i on a rung with datasets (A, B):
+1. Take i's response vectors in A and B (R1: unit rows; R2: R2-unit rows; R0: rows
+   indexed (unit, ipsi | contra), where ipsi means the stimulated side, left-stim vs. right-stim).
+2. Keep rows present and non-missing in both.
+3. Remove the seed unit(s) of every perturbation being compared. For R0, both sides are
+   removed. For R2, the seed R2 unit is removed.
+4. Remove rows that are zero in both (A2.3). If fewer than 10 rows remain, the result is NA.
+5. ρ = Spearman correlation, with ties given average ranks.
+
+### A4.2 H1 test: mismatched-target null (primary)
+
+- **Statistic:** the median of ρ(i_A, i_B) over the rung's targets. Only drawn targets
+  count (R0 133, R1 134, R2 58). Case-study perturbations never enter.
+- **Null:** 1,000 random derangements π of the targets. Each gives the median of
+  ρ(i_A, π(i)_B), computed with A4.1. Step 3 removes the seed units of both i and π(i).
+- **p** = (1 + #{null median ≥ observed median}) / 1001, one-sided.
+- The null asks whether a target's response in one dataset matches the same target in the
+  other dataset better than it matches a different target. A cell-label shuffle only asks
+  whether the vectors share any structure at all, which hub cell types guarantee.
+- **Secondary (sanity check):** a cell-label shuffle of B's vector within the retained rows,
+  1,000 times per target. Reported, not tested.
+- **Multiplicity:** H1 is tested per rung (R0, R1, R2) and per model (linear, LIF), 6 tests,
+  with a Holm correction at α = 0.05.
+- **Seed:** permutations use numpy default_rng(20260928).
+
+### A4.3 Outputs
+
+- `results/linear/<condition>/rho_<rung>.csv`: one row per perturbation (draw and case study),
+  with ρ, the number of rows used, and an NA reason.
+- `results/linear/<condition>/h1_<rung>.json`: observed median, the null quantiles
+  (2.5, 50, 97.5), p, and the median of the cell-label-shuffle null.
+- H2–H4 comparisons are specified before their runs in a later amendment. H4 already
+  names "the same permutation baseline as H1" (A1.1), which now means A4.2.
