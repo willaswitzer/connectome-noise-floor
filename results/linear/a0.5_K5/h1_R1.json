@@ -1,0 +1,14 @@
+{
+ "n_targets": 106,
+ "n_na": 28,
+ "observed_median_rho": 0.6484438698008663,
+ "null_median_q025_q50_q975": [
+  0.0924150560311721,
+  0.15642465368699454,
+  0.2243629966702401
+ ],
+ "p_one_sided": 0.000999000999000999,
+ "label_shuffle_null_median_rho": NaN,
+ "perms": 1000,
+ "rng_seed": 20260928
+}
