@@ -160,3 +160,124 @@ If root IDs can't be mapped reliably, the condition is dropped and reported as a
 ### A1.10 Out of scope
 
 BANC (v888) is not added. It would extend R2 to the SEZ, but its ~0.35× synapse deficit (brainlab, 2026) would add a new confound. It is noted as future work.
+
+## Amendment 2 — 2026-09-28 (before any results)
+
+**Status at time of amendment.** No cross-connectome, linear-model or error-injection output
+has been computed or viewed. The only model output remains the Week-5 Shiu checkpoint.
+The R0 counts below come from annotations only (`src/r0_flags.py`). Everything in Amendment 1
+stands unless changed here.
+
+**Reason.** Amendment 1 names a linear model but never specifies it, and three
+implementation details were left open: the R1 target count, the R0 eligibility rule,
+and what "matched edges" means in the Wsyn rule. These are fixed here before the
+linear model is run.
+
+### A2.1 Linear model (specified)
+
+- **Weights:** W_ij = s_i · n_ij / Σ_i' n_i'j. Here n_ij = synapses i→j, and the denominator is
+  j's total input from all presynaptic neurons in that dataset's graph, matched or not (A1.4).
+- **Sign s_i:** comes from the four-tier NT rule. GABA and glutamate give −1; every other
+  assigned transmitter gives +1, the same binary convention as Shiu's `Excitatory` column.
+  Neurons with no assignable sign (tier 4) have s_i = 0: they receive input but pass none on.
+- **Propagation:** truncated rectified cascade. r_0 = seed vector (1 on every seed neuron,
+  0 elsewhere); r_k[j] = max(0, α · Σ_i W_ij · r_{k−1}[i]); response R = Σ_{k=1..K} r_k.
+  **Primary: α = 0.5, K = 5.** Sensitivity: α ∈ {0.3, 0.7}, K ∈ {3, 10}.
+- This replaces the phrase "steady-state response" in the Metric section. A fixed point
+  of a rectified signed network need not exist or be unique. The truncated cascade is
+  deterministic and cheap enough to run on every target and every Arm-2 sweep point.
+- **Unit response:** the mean of R over the unit's neurons in that dataset. Unmatched
+  neurons propagate activity but are not read out. The seed unit is excluded from its
+  own response vector.
+
+### A2.2 Stimulation and readout per rung
+
+- **R1 (FlyWire vs. male CNS):** stimulate all seed-unit neurons in each dataset,
+  both sides. Read out over all matched units present in both datasets.
+- **R2 (FlyWire vs. hemibrain):** same as R1, on units present in both.
+  **Sensitivity:** FlyWire stimulated and read out on right-side neurons only, to
+  mirror hemibrain's mostly right-hemisphere volume. If the R2 rung position differs
+  between primary and sensitivity, it is reported as a main-text caveat.
+- **R0 (FlyWire left vs. right):** stimulate the seed unit's left-side neurons in one
+  run and its right-side neurons in another. The response vector is indexed by
+  (unit, ipsilateral | contralateral), where ipsilateral means neurons on the stimulated side. It is
+  computed over R0-usable units only; midline (`center`) neurons are excluded.
+
+### A2.3 Correlation set
+
+The Spearman correlation is computed over the rung's shared units, excluding units whose
+response is zero in both members of the pair. If fewer than 10 units remain, that
+target×rung is reported as NA and counted.
+**Sensitivity:** include double-zero units.
+
+### A2.4 Target counts per rung (clarifies A1.2)
+
+Tier A (80) and Tier B (58) do not overlap, and together they make up the 134 targets. All 134 have
+matched units in FlyWire and male CNS.
+- **R1:** 134 targets. A1.2's "Tier A (80): these are the R1 targets" is corrected.
+  The Metric section already says 134.
+- **R2:** the 58 Tier B targets.
+- **R0:** 134 targets. A unit is R0-usable if it has ≥1 FlyWire neuron with `side` = left
+  and ≥1 with `side` = right (annotations v3.0.0); 7,476 of 7,579 units qualify. A target is
+  R0-eligible if its seed unit is R0-usable; all 134 are. See `results/prereg/r0_flags.csv`.
+
+### A2.5 Matched edges for the Wsyn rule (A1.4)
+
+- **Unit-pair edge strength:** total u→v synapses ÷ number of connected neuron pairs (u_i→v_j,
+  ≥1 synapse), i.e. mean synapses per connected pair. This keeps the strength independent of
+  how many neurons each dataset assigns to a unit.
+- **Matched edge:** a unit pair (u ≠ v) present in both datasets and passing the
+  conserved-edge filter in both. The filter is strength > 10 OR u→v synapses ≥ 1% of v's
+  total input from matched units.
+- Wsyn_k = 0.275 mV × median_FlyWire ÷ median_k over those edges. Computed by
+  `src/compute_wsyn.py`, which reads no simulation output.
+
+### A2.6 Implementation record
+
+- The FlyWire graph (`data/derived/graphs/flywire.parquet`) was first built on 2026-09-22
+  from the Princeton table, contrary to A1.3. No model was run on it. The graph is
+  rebuilt from Buhmann synapses (primary), with Princeton written separately as
+  `flywire_princeton.parquet` (sensitivity).
+- The project planning doc "rev. 3" (2026-09-28) proposed a ~15-target canonical
+  sensory set, a ≥5-synapse edge threshold everywhere, and MN9-tuned Wsyn as a
+  sensitivity. None of these is adopted; the 134-target draw and Amendment 1 stand.
+
+### A2.7 Graph scope (which bodies are nodes)
+
+The first graph build (2026-09-28) used different scopes per dataset. Hemibrain
+`status="Traced"` returns 97,900 bodies, of which 76,161 are cropped "Leaves" fragments.
+The male CNS graph kept all 188,778 annotated bodies, including ~20k VNC neurons and bodies
+with no superclass. FlyWire v783 is brain-only proofread neurons. Scopes are fixed as:
+
+- **FlyWire v783:** all neurons in the release (unchanged).
+- **Male CNS, primary:** brain neurons only, i.e. bodies with a superclass that is not
+  `vnc_intrinsic`, `vnc_sensory`, `vnc_motor` or `vnc_efferent`. Ascending and descending
+  neurons are kept, but their VNC partners are not, so activity cannot loop through the VNC
+  (FlyWire has no VNC). Bodies with no superclass are excluded, consistent with the
+  166,700-neuron definition used in `build_units_v2.py`.
+  **Sensitivity:** whole CNS, all bodies with a superclass.
+- **Hemibrain, primary:** bodies with statusLabel `Traced` or `Roughly traced`
+  (21,739), plus any `Leaves` body that maps to a matched unit (2,880). Untyped Leaves
+  fragments are excluded. **Sensitivity:** all 97,900 bodies.
+- Input-fraction denominators (A2.1) are computed within the scoped graph.
+- These are structural choices, made after seeing only node and edge counts
+  from `build_matched_graphs.py`. No model output has been computed.
+
+### A2.8 R2 units: merge units that share hemibrain bodies
+
+Hemibrain types are often coarser than FlyWire types. In `unit_hemibrain_map.csv`,
+3,092 of 17,868 mapped hemibrain bodies map to more than one unit (up to 10), touching 816
+units. Dropping those bodies, as the first graph build did, leaves 5 of the 58 Tier B seeds
+with no hemibrain neurons (LC10d, LC26, OCG01c, VST1, DNp41) and shrinks a sixth (DNpe009).
+
+- **Primary:** for R2 (and R3), the comparison unit is an **R2 unit**: a connected
+  component of the bipartite graph linking units to the hemibrain bodies they map to
+  (the grouping of Schlegel et al. 2024). In both datasets, a target's R2 seed is the
+  R2 unit containing its seed unit, and FlyWire responses are aggregated to R2 units.
+  R0 and R1 keep the original units.
+- **Sensitivity:** drop ambiguous bodies (the first build's behavior). Targets left with
+  no hemibrain seed neurons are reported as NA.
+- R2 reports how many targets share an R2 unit with another target, and how many
+  R2 units merge more than one original unit.
+- This is distinct from the `build_units_v2.py` hb2ct comma-join limitation already
+  in PREREG (3 of 7,579 units). That limitation stands.
