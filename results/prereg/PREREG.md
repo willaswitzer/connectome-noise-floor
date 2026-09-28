@@ -528,3 +528,60 @@ NT-mislabel condition on the unrectified model (A5.2).
   single male CNS neuron (left side), so it is NA on R1ipsi_right. R0ipsi inherits the HBeyelet
   NA. The RuntimeWarning "Mean of empty slice" printed during the run comes from targets whose
   label-shuffle null is all NaN (constant vectors). It is harmless and does not affect any ρ or p.
+
+## Amendment 6 — 2026-09-28 (before any H2 or H3 run)
+
+**Status at time of amendment.** Linear results for H1 (all rung forms) and H4, rectified and
+unrectified, have been computed and seen (commit 148f0dd). No edge-filtered or sign-ablated
+model has been run. The only numbers from those conditions are the edge-survival fractions
+below, which come from graph structure alone.
+
+**Reason.** H2 and H3 are named in the Metric section, but the exact procedures are not fixed.
+
+### A6.1 H2 — edge filter
+
+- **Filter:** in each dataset's scoped graph (A2.7), keep a neuron-to-neuron edge i→j if
+  n_ij > 10 synapses or n_ij ≥ 1% of j's total input. The filter is applied to each dataset
+  independently.
+- The Metric section calls this "conserved-edge filtered". The filter is the stated threshold
+  only. It does not additionally require the edge to exist in the other dataset, because that
+  would make each dataset's graph depend on which rung it is being compared on.
+- **Weights:** surviving edges keep their unfiltered input fraction (n_ij ÷ j's unfiltered total
+  input). Filtering only removes edges; it does not renormalize the rest.
+- **Survival (structure only):** FlyWire keeps 22.3% of edges and 58.6% of synapses; male CNS
+  keeps 19.2% and 60.3%; hemibrain keeps 18.9% and 59.6%.
+- **Test:** for each primary rung (R0, R1, R2, in the A2.2 forms used for H1), compute
+  excess ρ = ρ − that condition's H1 null median for the rung. Pair drawn targets that are
+  non-NA in both conditions. Run a one-sided Wilcoxon signed-rank test with the filtered
+  condition predicted higher. Apply Holm over the 3 rungs, within each model.
+- **Relation to Currier & Clandinin (2025):** their result predicts a positive H2. That
+  prediction is noted here, before the run.
+
+### A6.2 H3 — sign ablation
+
+- **Ablation:** every neuron is set excitatory (s_i = +1), including neurons with no assigned
+  sign (tier 4). Everything else is as in the base model.
+- In the rectified model, inhibitory-seed targets respond under ablation but not in the base
+  model. So H3 is tested only on targets non-NA in both conditions, which means excitatory
+  seeds for the rectified model and all targets for the unrectified one.
+- **Test:** same as A6.1, with the base condition predicted higher. One-sided Wilcoxon on paired
+  excess ρ, Holm over the 3 rungs within each model.
+- As A1.7 states, H3 is a within-model sanity check. The Arm-2 NT-mislabel condition is
+  separate.
+
+### A6.3 Models, outputs, and α/K sensitivity
+
+- H2 and H3 are run for the rectified primary model and, as a sensitivity check, the
+  unrectified model (A5.2). LIF follows once its Arm-1 scope is fixed (open item below).
+- For each hypothesis, report the median paired difference in excess ρ with a 95% bootstrap CI
+  (1,000 resamples, `default_rng(20260928)`), the raw ρ medians, the one-sided p, and the Holm p.
+  Output: `results/linear/<base>/h2_h3.csv` (`src/h23_test.py`).
+- The α/K sensitivity conditions from A2.1 (α ∈ {0.3, 0.7} at K = 5; K ∈ {3, 10} at α = 0.5) are run
+  for H1 and H4 and reported descriptively. The primary conclusions rest on α = 0.5, K = 5.
+
+### A6.4 Open item: LIF Arm-1 scope
+
+- The Metric section runs LIF on every target, and the H1 Holm correction (A4.2) counts LIF as
+  the second model. A3.1 makes the case-study set the fixed LIF list for Arm 2.
+- Whether LIF Arm-1 runs on all 134 drawn targets or on a smaller fixed subset must be decided,
+  with a runtime estimate from the re-run Shiu checkpoint, before any LIF cross-dataset run.
