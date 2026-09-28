@@ -435,3 +435,90 @@ For target i on a rung with datasets (A, B):
   (2.5, 50, 97.5), p, and the median of the cell-label-shuffle null.
 - H2–H4 comparisons are specified before their runs in a later amendment. H4 already
   names "the same permutation baseline as H1" (A1.1), which now means A4.2.
+
+## Amendment 5 — 2026-09-28 (after H1 medians were seen; before any H4 test was run)
+
+**Status at time of amendment.** The primary linear condition (α = 0.5, K = 5, rectified)
+has been analyzed under Amendment 4. Results seen: per-target ρ and H1 summaries for R0, R1,
+R2 and R2right. Medians: R0 0.52, R1 0.65, R2 0.59, R2right 0.55; p = 0.001 on every rung.
+Also seen: the case-study R1 ρ values. **Everything below was specified after those H1
+medians were seen and before any H4 test was run.** No R0ipsi, R1ipsi, R1half or unrectified
+output exists yet.
+
+### A5.1 H1 scope: inhibitory seeds produce no response (a model property)
+
+- The pre-registered H1 population is all drawn targets. Every target whose seed unit is
+  inhibitory returned zero response everywhere: 27 of 134 on R0 and R1, and 10 of 58 on R2.
+  With zero baseline activity and rectification at every hop (A2.1), an inhibitory
+  perturbation has nothing to suppress. These targets are NA under A2.3.
+- H1 as computed therefore covers excitatory-seed targets: R0 107, R1 106, R2 41. It is
+  reported that way, with the n and the reason stated. The draw is **not** re-drawn or
+  replaced; its value is that it was random.
+- This is reported as a finding about zero-baseline models. The Shiu LIF model shares the
+  property (zero basal firing, A1.5).
+- Other NAs are recorded, not changed. `constant_vector` means a response that is identically
+  zero in one dataset, mostly descending-neuron targets whose outputs lie outside the
+  hemibrain volume. `lt10_rows` is defined in A2.3.
+
+### A5.2 Sensitivity model: unrectified linear cascade
+
+- This is the A2.1 model with rectification removed. Negative values are kept as suppression.
+  α, K, weights and signs are unchanged. With |W| row sums ≤ 1 and α = 0.5 the cascade is stable.
+- It runs on **all** targets and all rungs, including the A5.3 forms. H1 and H4 are
+  repeated on it and reported next to the primary model. It does not replace the primary
+  model: inhibitory targets become measurable here, and the excitatory set is compared
+  between the two models.
+- Spearman ρ, the double-zero rule and the nulls are as in A4.
+
+### A5.3 Like-for-like rung forms for H4, a method control, and the H4 test
+
+**Why.** R0 as defined in A2.2 stimulates one side and splits the readout into ipsi and contra
+rows. R1 and R2 stimulate both sides and read out whole units. The observed order
+(R1 > R2 > R0) could be a construction effect, so it is not interpreted.
+
+**Forms used for H4** (every rung: one-sided stimulation, readout on the stimulated side,
+one row per unit):
+- **R0 → R0ipsi:** FlyWire left-stim / left-side readout vs. FlyWire right-stim / right-side
+  readout, per unit.
+- **R1 → R1ipsi_right:** FlyWire right-stim / right-side readout vs. male CNS right-stim /
+  right-side readout. The right side is chosen to match R2. Male CNS side = `somaSide`, else
+  `rootSide` (side known for 99.6% of matched neurons). Sensitivity: **R1ipsi_left**.
+- **R2 → R2right** (already pre-registered, A2.2): FlyWire right-stim / right-side readout
+  vs. hemibrain. Hemibrain side labels are unreliable (28% of mapped bodies have no side
+  suffix), so hemibrain uses its whole volume, which is mostly right hemisphere.
+
+**Method control (reported, not tested): R1half.** FlyWire vs. male CNS, both built exactly
+like the original R0: left-stim, readout split into ipsi and contra. If R1half ≈ R0, the
+original R0 median reflects the construction. If R1half ≈ R1, the within-animal agreement is
+genuinely lower. An R2half is not run, because hemibrain side labels are unreliable (above).
+
+**H4 test** (`src/h4_test.py`):
+- Per drawn target, excess ρ = ρ − that rung form's H1 null median. Each rung is scored against
+  its own mismatched-target baseline, which is how "the same permutation baseline as H1"
+  (A1.1) is implemented.
+- Pairs R0 > R2, R2 > R1, R0 > R1. For each pair, use targets non-NA on both, a one-sided
+  Wilcoxon signed-rank test on paired excess ρ, and Holm correction over the 3 pairs within
+  each model.
+- Report the median paired difference with a 95% bootstrap CI (1,000 resamples,
+  `default_rng(20260928)`) and the raw ρ medians.
+- "Ordering supported" requires both R0 > R2 and R2 > R1 to be significant after Holm.
+  Any other outcome, including a reversed order, is reported as found.
+
+**R2 coverage.** Rows are already restricted to units present in both datasets (A4.1). What
+remains is truncation of arbors at the hemibrain volume edge, which lowers R2 for a coverage
+reason. It is stated as a limitation, not corrected.
+
+### A5.4 Case-study correction: VP4_dry_PN
+
+`VP4_vPN` is GABAergic (tier 0), a selection error in A3.1. It was found because its R1 result
+was NA (zero response). It is replaced by `VP4+VL1_l2PN`, the only cholinergic PN type
+innervating VP4. That type also innervates VL1, so it is not a pure dry-air channel; this is
+stated. No other case-study result was used to make this choice.
+
+### A5.5 Open item for the Arm-2 protocol (A1.8)
+
+In the rectified model, flipping a seed neuron's sign to inhibitory zeroes the whole response
+(drift = 1), and flipping a downstream inhibitory neuron to excitatory reveals activity that was
+invisible. The NT-mislabel curve would therefore partly measure the rectifier. A1.8 must choose,
+before any injector exists, between (a) excluding seed-unit flips from drift, and (b) running the
+NT-mislabel condition on the unrectified model (A5.2).
