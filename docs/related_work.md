@@ -54,8 +54,8 @@ within a single connectome determine function. We ask a different one: whether t
 predictions of the same whole-brain model replicate across connectomes from different animals,
 and how much reconstruction error they tolerate relative to that cross-animal variability; we
 make no claim about agreement with measured activity. Their design also illustrates why that
-question matters: connectome-to-function studies routinely borrow wiring from a different
-animal, here of the other sex, without measuring what that substitution costs. Their result nonetheless makes a specific
+question matters: connectome-to-function comparisons often pair physiology from one animal with
+wiring from another, here of the other sex, and the cost of that substitution has not been measured. Their result nonetheless makes a specific
 prediction for our error budget: errors that mainly remove or add weak connections, such as
 missed and spurious synapses, should shift model predictions little, whereas errors that alter
 strong connections, such as false merges and splits or sign errors on strong inputs, should
