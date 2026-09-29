@@ -750,3 +750,40 @@ family would take about 55 h of laptop compute.
 - For every perturbation and rung, the cross-dataset ρ computed from the first 10 trials is
   compared with the ρ from all 30. Report the median and maximum absolute difference.
 - This informs the Arm-2 trial count. No threshold is fixed here.
+- **2026-09-29, LIF implementation (Amendment 7), recorded before any LIF cross-dataset ρ was
+  computed.**
+  - **Code.** `src/lif_prep.py` converts each scoped graph (A2.7) into Shiu's input format, with
+    A3.4 signs, and builds the A2.2 seed sets. `src/run_lif.py` runs the simulations and is
+    resumable. `src/analyze_lif.py` computes the readouts.
+  - **Inputs.** The FlyWire graph matches Shiu's `Connectivity_783.parquet` in edge count
+    (15,091,983), synapse total (54,492,922) and node count (138,639). None of the three graphs
+    applies a minimum-synapse threshold; PREREG sets none.
+  - **Runs.** Identical seed sets are simulated once (9 FlyWire R2 seeds equal their R1 seeds). That
+    gives 67 distinct runs at primary Wsyn (FlyWire 43, male CNS 14, hemibrain 10) plus 24 at fixed
+    Wsyn.
+  - **Trials per process.** With large seed sets, brian2 slows down about 10× after the first
+    trial in a process (sugar_GRN, 122 seeds: 23 s for the first trial, then about 265 s per trial)
+    and keeps using more memory. Each trial therefore runs in its own subprocess, with 2 in
+    parallel on FlyWire and hemibrain. The first hemibrain run (DA1_uPN R2) was made with 10-trial
+    processes. It is kept, because the model and trials are the same.
+  - **Runtime.** About 5–6 min per 30-trial run with 2 parallel processes. The whole set is roughly
+    12–14 h, longer than the checkpoint-based estimate, because whole-type seeds at 150 Hz recruit
+    far more activity than 20 GRNs at 100 Hz.
+  - **Stimulus weight.** Shiu sets it as w_syn × f_poi. It is held at 0.275 mV × 250 = 68.75 mV in
+    every condition by setting f_poi = 250 × 0.275 / Wsyn. Otherwise the Wsyn rescaling (A1.4)
+    would also weaken how hard the stimulus drives male CNS seeds. This is an implementation choice
+    and was not in A7.2.
+  - **Activity level.** Seen from single-dataset activity only, before any cross-dataset
+    comparison. Some seeds recruit a large part of the network. Examples at 150 Hz on DA1 PNs
+    (both sides):
+    - hemibrain: 7,481 of 24,616 nodes active, mean 86 Hz (the protocol run, 30 trials)
+    - FlyWire: 5,152 of 138,639 active (1-trial diagnostic)
+    - male CNS: 7,898 of 146,176 active (1-trial diagnostic)
+    - Sugar GRNs in FlyWire recruit 611 (1-trial diagnostic).
+  - **Structural correlate.** The median net excitatory synapse count onto a neuron is 10 in
+    FlyWire, 25 in male CNS and 36 in hemibrain; median total input is 200, 336 and 312. Multiplied
+    by Wsyn, that is about 2.8, 4.7 and 9.4 mV of median net excitatory drive per unit of presynaptic
+    activity.
+  - **Handling.** Wsyn is not re-tuned, because A1.4 excludes calibrating on simulation output.
+    Activity (fraction of nodes active, spikes per trial) is reported for every run as a
+    descriptive LIF result. The diagnostics were written to a scratch folder and are not used.
