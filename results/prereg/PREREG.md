@@ -691,3 +691,62 @@ below, which come from graph structure alone.
     - The male CNS graph has about 1.45× the connections of FlyWire (1.9× the synapses), so its runs will be slower.
     - Ten trials instead of 30 divides every figure by about 3.
     - The A6.4 decision is still open. These are the inputs for it.
+
+## Amendment 7 — 2026-09-29 (before any LIF cross-dataset run; resolves A6.4)
+
+**Status at time of amendment.** No LIF cross-dataset output exists. The only LIF output is the
+v783 checkpoint rerun, which is single-dataset (Implementation notes, 2026-09-29). Linear results
+for H1–H4, α/K and E1/E2 have been seen.
+
+**Reason.** A6.4 left the LIF Arm-1 scope open. At about 5 min per 30-trial run, the full H1 LIF
+family would take about 55 h of laptop compute.
+
+### A7.1 Scope
+
+- LIF runs on the case-study set only (A3.1). Perturbations per rung: R0 14, R1 14, R2 10.
+- That is 76 runs at primary Wsyn:
+  - R0: 28 (left and right stimulation)
+  - R1: 28 (FlyWire and male CNS)
+  - R2: 20 (FlyWire and hemibrain)
+- The Wsyn sensitivity condition adds 24 runs (male CNS 14, hemibrain 10). FlyWire's Wsyn is
+  0.275 mV in both conditions, so its runs are shared.
+- There are no LIF runs on the 134-target draw in Arm 1.
+- Graphs, seeds and readout units are those of the linear model: the scoped graphs (A2.7), the A2.2
+  seed and readout definitions, and the brain-only readout (A3.3).
+
+### A7.2 Model
+
+- The Shiu LIF model (`model.py`) is unchanged except for weights and signs.
+- Signs: A3.4. Neurons with no sign have w = 0.
+- Edge weight: raw synapse count × Wsyn.
+- Primary Wsyn: structural rescaling (A1.4), taken from `results/wsyn.csv`: FlyWire 0.275 mV,
+  male CNS 0.189 mV, hemibrain 0.262 mV.
+- Sensitivity: 0.275 mV on every connectome (A1.4).
+- Stimulation: Poisson input at 150 Hz, Shiu's default, on every seed neuron. 30 trials of 1 s.
+  Trials run in 10-trial subprocesses (Implementation notes, 2026-09-29).
+- Unit response: the mean firing rate over the unit's neurons and trials. Per-trial rates are stored
+  for every neuron.
+
+### A7.3 Readouts and status
+
+- Readouts are A1.6 items 1–3:
+  - Spearman ρ of unit response vectors, per A4.1, with the seed unit(s) removed and the
+    double-zero rule applied
+  - named-target sign and magnitude agreement
+  - top-20 rank agreement, with k = 10 and k = 50 as sensitivity checks
+- LIF results are descriptive. They are not used for H1–H4.
+- **Deviation from the pre-registration, stated as such.** The Metric section and H1 name both
+  model classes, and A4.2 applies Holm over 6 tests (3 rungs × 2 models). H1 is now tested for the
+  linear model only, so its Holm family is the 3 linear rungs. The raw linear H1 p-values are 0.001
+  on every rung, so Holm-adjusted p = 0.003 each. The conclusion does not change.
+- Case-study perturbations have no mismatched-target null of their own. The A4.2 null uses drawn
+  targets only. LIF ρ values are therefore reported raw, next to the linear ρ for the same
+  perturbation and rung.
+
+### A7.4 Trial-count check (input to A1.8)
+
+- For every run, the Spearman ρ between the unit response vector from the first 10 trials and the
+  vector from all 30 is reported.
+- For every perturbation and rung, the cross-dataset ρ computed from the first 10 trials is
+  compared with the ρ from all 30. Report the median and maximum absolute difference.
+- This informs the Arm-2 trial count. No threshold is fixed here.
