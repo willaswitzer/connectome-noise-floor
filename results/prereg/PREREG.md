@@ -585,3 +585,28 @@ below, which come from graph structure alone.
   the second model. A3.1 makes the case-study set the fixed LIF list for Arm 2.
 - Whether LIF Arm-1 runs on all 134 drawn targets or on a smaller fixed subset must be decided,
   with a runtime estimate from the re-run Shiu checkpoint, before any LIF cross-dataset run.
+- **2026-09-29, H2/H3 results (Amendment 6; commits e331490 and next).** Both hypotheses not
+  supported, in both models; both reversed. Median paired difference in excess ρ (95% CI):
+  - H2 (edge filter), rectified: R0 −0.012 (−0.041, 0.010); R1 −0.075 (−0.099, −0.066);
+    R2 −0.093 (−0.144, −0.056). Unrectified: R0 −0.099 (−0.109, −0.081); R1 −0.100 (−0.119,
+    −0.088); R2 −0.102 (−0.135, −0.073).
+  - H3 (sign ablation), rectified: R0 −0.253; R1 −0.229; R2 −0.152 (ablated higher; all CIs
+    exclude 0). Unrectified: R0 −0.240; R1 −0.269; R2 −0.313. Raw median ρ under ablation
+    0.91–0.96 on every rung in both models.
+  - The Currier & Clandinin–based prediction for H2 (A6.1) did not hold.
+- **Environment.** On 2026-09-28 at about 16:05, installing the unused `connectome-drift`
+  skeleton into the shared venv downgraded pandas 3.0.6 → 2.3.3. Every result from commit
+  05034b3 onward used pandas 2.3.3. The matched units and target draw (2026-09-21/22) were
+  built with 3.0.6. The skeleton package was uninstalled on 2026-09-29 and exact package
+  versions are pinned in `requirements-lock.txt`. No numerical effect is expected; this is
+  recorded for reproducibility.
+
+## Exploratory analyses (not pre-registered; planned 2026-09-29 after H2/H3 were seen)
+
+- **E1, renormalized edge filter.** H2 filtering removes about 40% of each neuron's input
+  without renormalizing (A6.1). E1 repeats H2 with input fractions recomputed on the filtered
+  graph, to separate "which edges" from "how much total drive".
+- **E2, hub tracking under sign ablation.** Tests whether all-excitatory responses mainly follow
+  structural hub connectivity (response vs. in-degree and vs. the leading eigenvector of the
+  weight matrix), as an explanation for the H3 reversal.
+- Both are labelled exploratory in all outputs and in the paper.
