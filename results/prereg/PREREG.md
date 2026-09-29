@@ -657,3 +657,37 @@ below, which come from graph structure alone.
     therefore comes from the signs. The next exploratory question is whether it comes from
     cancellation under mixed signs, from sign disagreements between datasets for matched types, or
     both. That is not run yet.
+- **2026-09-29, Week-5 checkpoint rerun on v783 (A3.4 signs) and LIF runtime (input to A6.4).**
+  Code: `src/shiu_checkpoint_783.py`. Output: `results/checkpoints/shiu_783/<condition>/`.
+  - **Setup.** The Sep 21 checkpoint used Shiu's v630 files (`2023_03_23_*_630_final`, see
+    `example_executed.ipynb` cell 0), not v783. This rerun keeps the Shiu model unchanged
+    (w_syn 0.275 mV, 100 Hz Poisson input, 30 trials × 1 s). Stimulus: Shiu's sugar-GRN list. It has
+    20 IDs in v783; 720575940620900446 is not a v783 root. Readout: MN9, 720575940660219265.
+  - **MN9 rate** (mean ± SEM over 30 trials; target 67.0):
+    - v630, Shiu signs, 21 GRNs (control, same environment): 67.9 ± 1.1 Hz
+    - v783, Shiu `Excitatory` column: 60.4 ± 0.8 Hz
+    - v783, A3.4 signs: 60.8 ± 1.0 Hz
+    - v783, A3.4 predictions-only signs: 62.1 ± 0.8 Hz
+  - **Reading.**
+    - The environment reproduces the Sep 21 result (67.9 vs. 66.4 Hz).
+    - A3.4 signs do not move MN9 relative to Shiu's signs on the same graph. A3.4 flips the sign of
+      3.0% of synapses (14,658 presynaptic neurons) and zeroes 0.5% (769 neurons with no sign).
+    - The drop of about 7 Hz (about 11%) comes from v630 → v783. That change includes one fewer
+      stimulated GRN, which is not separated here.
+    - The v783 baseline for all LIF work is therefore about 61 Hz, not 67. This is a replicability
+      finding in its own right: the same model on two proofreading snapshots of the same animal.
+      It is also a data point for the Arm-2 real-error condition (A1.9).
+  - **Runtime.**
+    - Single core, after the first compile: about 10 s per 1-s trial on v783. A 30-trial run takes
+      about 5 min, including network build.
+    - Peak memory is about 4 GB per worker. Two parallel workers exceeded 8 GB, and trials in one
+      process leak memory, so the script runs 10-trial chunks in fresh subprocesses.
+    - The Sep 21 laptop run took 311 s for 30 trials with all cores. Taking about 5 min per
+      (perturbation × dataset or side) run on the laptop:
+      - All drawn targets on R0, R1 and R2, which is the H1 LIF family in A4.2: about 650 runs, about
+        55 h. Adding the H4 one-sided forms brings it to about 790 runs, about 65 h.
+      - R1 only, all 134 targets: about 270 runs, about 22 h.
+      - Case-study set only, on R0/R1/R2: about 76 runs, about 6–7 h.
+    - The male CNS graph has about 1.45× the connections of FlyWire (1.9× the synapses), so its runs will be slower.
+    - Ten trials instead of 30 divides every figure by about 3.
+    - The A6.4 decision is still open. These are the inputs for it.
