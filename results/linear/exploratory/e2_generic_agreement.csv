@@ -1,0 +1,5 @@
+model,condition,rho_generic_flywire_vs_male_cns
+rectified,base,0.8644466488845785
+rectified,sign_ablated,0.9339011244996662
+unrectified,base,0.763389570335053
+unrectified,sign_ablated,0.9339011244996662

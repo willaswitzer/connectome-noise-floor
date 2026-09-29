@@ -27,10 +27,13 @@ p.add_argument("--batch", type=int, default=50)
 p.add_argument("--no-rectify", action="store_true", help="unrectified sensitivity model (A5.2)")
 p.add_argument("--edge-filter", action="store_true", help="H2: >10 synapses or >=1%% of input (A6.1)")
 p.add_argument("--sign-ablate", action="store_true", help="H3: every neuron excitatory (A6.2)")
+p.add_argument("--edge-filter-renorm", action="store_true",
+               help="exploratory E1: H2 filter, input fractions recomputed on the filtered graph")
 args = p.parse_args()
 OUT = Path(f"data/derived/linear/a{args.alpha}_K{args.K}" + ("_norect" if args.no_rectify else "")
-           + ("_ef" if args.edge_filter else "") + ("_signabl" if args.sign_ablate else ""))
-GKW = {"edge_filter": args.edge_filter, "sign_ablate": args.sign_ablate}
+           + ("_ef" if args.edge_filter else "") + ("_efrn" if args.edge_filter_renorm else "") + ("_signabl" if args.sign_ablate else ""))
+assert not (args.edge_filter and args.edge_filter_renorm), "choose --edge-filter or --edge-filter-renorm"
+GKW = {"edge_filter": args.edge_filter, "sign_ablate": args.sign_ablate, "renorm": args.edge_filter_renorm}
 OUT.mkdir(parents=True, exist_ok=True)
 
 # ---------- perturbations ----------

@@ -610,3 +610,50 @@ below, which come from graph structure alone.
   structural hub connectivity (response vs. in-degree and vs. the leading eigenvector of the
   weight matrix), as an explanation for the H3 reversal.
 - Both are labelled exploratory in all outputs and in the paper.
+- **2026-09-29, α/K sensitivity (A6.3; descriptive).** Rectified model, α ∈ {0.3, 0.7} at K = 5 and
+  K ∈ {3, 10} at α = 0.5, rung forms R0, R1, R2, R2right, R0ipsi, R1ipsi_right. Table:
+  `results/linear/sensitivity_alphaK.csv` (`src/summarize_alphak.py`).
+  - H1: p = 0.001 on every rung form at every grid point. Median ρ rises with K (R1: 0.59 at K = 3,
+    0.65 at K = 5, 0.66 at K = 10) and moves little with α (R1: 0.64 at α = 0.3, 0.66 at α = 0.7).
+  - H4: the same pattern as the primary condition at all four grid points. R0 > R2 and R0 > R1 are
+    significant after Holm. R2 > R1 is reversed, with median paired excess difference −0.014 to
+    −0.049 and every CI below 0. The observed order R0 > R1 > R2 does not depend on α or K.
+  - At K = 3 the mismatched-target null medians are near or below 0 on the one-sided forms
+    (R0ipsi −0.071, R1ipsi_right −0.025), compared with 0.07–0.08 at K = 5.
+- **2026-09-29, compute environment.** The runs from this date onward were computed in a Linux
+  x86_64 environment with the `requirements-lock.txt` versions of numpy, pandas, scipy and pyarrow
+  (Python 3.12.3), not on the laptop. As a check, the primary condition (α = 0.5, K = 5) was re-run
+  there first. R1/R2 response vectors match commit 148f0dd's to ≤ 6e-17, and `rho_R1.csv` and
+  `h1_R1.json` are identical.
+- **2026-09-29, E1 results (exploratory).** Code: `run_linear.py --edge-filter-renorm` (condition
+  suffix `_efrn`) and `src/e1_compare.py`. Output: `results/linear/exploratory/e1.csv`. Median
+  paired difference in excess ρ (95% bootstrap CI), with two-sided Wilcoxon, uncorrected:
+  - Renormalized filter vs. base, rectified: R0 −0.029 (−0.052, 0.018); R1 −0.087 (−0.098, −0.074);
+    R2 −0.099 (−0.139, −0.055). Unrectified: R0 −0.082; R1 −0.092; R2 −0.084, all CIs below 0.
+  - Renormalized vs. unrenormalized filter, rectified: R0 −0.002; R1 −0.006; R2 −0.002.
+    Unrectified: +0.019, +0.012, +0.006.
+  - Reading: renormalizing restores total drive but does not recover agreement (≤ 0.02 of the
+    ~0.08–0.10 H2 drop). So the H2 reversal comes from which edges the filter removes, not from lost
+    drive. The weak edges removed by the filter carry signal that is consistent across datasets.
+- **2026-09-29, E2 results (exploratory).** Code: `src/e2_hubs.py`. Outputs:
+  `results/linear/exploratory/e2_*.csv`. Specification details fixed when the code was written:
+  - It runs on rung R1 only. Rows are the A4.1 rows for each target.
+  - The "leading eigenvector" is taken from the synapse-count matrix. The input-fraction operator is
+    row-stochastic when every neuron is excitatory, so its leading eigenvector is flat.
+  - A seed-independent "generic" profile is added: the leave-one-out mean response over the other
+    drawn targets. So is a partial ρ that controls for it.
+  - Results, median over targets, rectified base → sign-ablated:
+    - Response vs. in-degree: FlyWire 0.08 → 0.08, male CNS 0.09 → 0.11.
+    - Response vs. eigenvector centrality: −0.03 → −0.11 (FlyWire), −0.05 → −0.10 (male CNS).
+    - Response vs. generic profile: 0.13 → 0.18 (FlyWire), 0.20 → 0.20 (male CNS).
+    - Cross-dataset ρ 0.65 → 0.95. Partial ρ (generic profile removed) 0.64 → 0.95.
+    - The unrectified base gives 0.46 → 0.95. The sign-ablated responses are identical in the two
+      models, as expected: there is nothing negative to rectify.
+    - Row counts are nearly equal across conditions (median 7,393 vs. 7,577), so the rise is not a
+      row-set effect.
+  - Reading: the hub explanation is not supported. All-excitatory responses do not follow in-degree,
+    eigenvector centrality or a shared generic profile. They stay target-specific, and their
+    cross-dataset agreement is about as high after the generic profile is removed. The H3 reversal
+    therefore comes from the signs. The next exploratory question is whether it comes from
+    cancellation under mixed signs, from sign disagreements between datasets for matched types, or
+    both. That is not run yet.

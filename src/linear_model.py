@@ -35,13 +35,16 @@ class Graph:
     r2: pd.Series              # node index -> r2_unit_id
 
 
-def build_operator(pre, post, weight, sign_of_pre, n, keep=None):
+def build_operator(pre, post, weight, sign_of_pre, n, keep=None, renorm=False):
     """pre/post: node indices; weight: synapse counts; sign_of_pre: sign per node index.
-    keep: optional boolean mask of edges to retain (H2 edge filter, Amendment 6). Input
-    fractions always use the UNFILTERED input total, so surviving edges keep their weight."""
+    keep: optional boolean mask of edges to retain (H2 edge filter, Amendment 6). By default
+    input fractions use the UNFILTERED input total, so surviving edges keep their weight.
+    renorm=True (exploratory E1) recomputes input fractions on the filtered graph instead."""
     in_total = np.bincount(post, weights=weight, minlength=n)
     if keep is not None:
         pre, post, weight = pre[keep], post[keep], weight[keep]
+        if renorm:
+            in_total = np.bincount(post, weights=weight, minlength=n)
     vals = sign_of_pre[pre] * weight / in_total[post]
     return sp.csr_matrix((vals.astype(np.float64), (post, pre)), shape=(n, n))
 
@@ -52,7 +55,7 @@ def edge_filter_mask(post, weight, n):
     return (weight > 10) | (weight / in_total[post] >= 0.01)
 
 
-def load_graph(name, sign_col="sign", edge_filter=False, sign_ablate=False):
+def load_graph(name, sign_col="sign", edge_filter=False, sign_ablate=False, renorm=False):
     e = pd.read_parquet(f"{GRAPHS}/{name}.parquet")
     ids, inv = np.unique(np.concatenate([e["bodyId_pre"].to_numpy(), e["bodyId_post"].to_numpy()]),
                          return_inverse=True)
@@ -63,8 +66,8 @@ def load_graph(name, sign_col="sign", edge_filter=False, sign_ablate=False):
     if sign_ablate:  # H3 (Amendment 6): every neuron excitatory, including unsigned ones
         sign = np.ones(len(ids))
     w = e["weight"].to_numpy(dtype=np.float64)
-    keep = edge_filter_mask(post, w, len(ids)) if edge_filter else None
-    A = build_operator(pre, post, w, sign, len(ids), keep=keep)
+    keep = edge_filter_mask(post, w, len(ids)) if (edge_filter or renorm) else None
+    A = build_operator(pre, post, w, sign, len(ids), keep=keep, renorm=renorm)
 
     def node_map(col_pre, col_post):
         m = pd.concat([pd.Series(e[col_pre].to_numpy(), index=pre),

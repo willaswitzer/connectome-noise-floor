@@ -51,3 +51,13 @@ def test_edge_filter_keeps_unfiltered_denominator():
     assert keep.tolist() == [True, False, True]
     A = build_operator(pre, post, w, np.ones(4), 4, keep=keep)
     assert np.isclose(A[2, 0], 20 / 2000) and A[2, 1] == 0
+
+
+def test_edge_filter_renorm_recomputes_denominator():
+    # exploratory E1: surviving edges' input fractions are recomputed on the filtered graph
+    from linear_model import edge_filter_mask
+    pre = np.array([0, 1, 3]); post = np.array([2, 2, 2]); w = np.array([20., 1., 1979.])
+    keep = edge_filter_mask(post, w, 4)
+    A = build_operator(pre, post, w, np.ones(4), 4, keep=keep, renorm=True)
+    assert np.isclose(A[2, 0], 20 / 1999) and np.isclose(A[2, 3], 1979 / 1999) and A[2, 1] == 0
+    assert np.isclose(A[2].sum(), 1.0)
