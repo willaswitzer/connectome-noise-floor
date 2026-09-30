@@ -33,11 +33,14 @@ ap.add_argument("--chunk", type=int, default=1,
                 help="trials per subprocess; brian2 slows down and leaks memory after the first trial in a process")
 ap.add_argument("--jobs", type=int, default=1, help="subprocesses run at once (each needs ~2.6 GB on FlyWire)")
 ap.add_argument("--only", default="", help="comma-separated run keys")
+ap.add_argument("--poisson", default="group", choices=["group", "shiu"],
+                help="group: one PoissonGroup + Synapses for all seeds (default); shiu: one PoissonInput per seed")
+ap.add_argument("--out-suffix", default="", help=argparse.SUPPRESS)
 ap.add_argument("--_worker", default=None, help=argparse.SUPPRESS)
 args = ap.parse_args()
 
 D = ROOT / f"data/derived/lif/{args.dataset}"
-OUT = D / args.wsyn
+OUT = D / (args.wsyn + args.out_suffix)
 OUT.mkdir(parents=True, exist_ok=True)
 seeds = json.loads((D / "seeds.json").read_text())
 wsyn_mv = 0.275 if args.wsyn == "fixed" else float(
@@ -47,6 +50,27 @@ if args._worker is not None:  # one chunk of trials for one run, in a fresh proc
     from brian2 import Hz, mV
     import model as shiu
     key, chunk_id = args._worker.split(":")
+    if args.poisson == "group":
+        import numpy as np
+        from brian2 import PoissonGroup, Synapses, ms
+
+        def poi_group(neu, exc, exc2, params):
+            """Same stimulus as Shiu's poi(): each seed neuron gets an independent Poisson train
+            whose events add w_syn * f_poi to v, and seeds have no refractory period. One
+            PoissonGroup + Synapses replaces one PoissonInput per neuron, whose per-subgroup code
+            brian2 compiles separately (minutes per new seed set with hundreds of seeds)."""
+            objs = []
+            for idx, rate in ((exc, params["r_poi"]), (exc2, params["r_poi2"])):
+                if len(idx) == 0:
+                    continue
+                idx = np.asarray(idx)
+                P = PoissonGroup(len(idx), rates=rate)
+                S = Synapses(P, neu, on_pre="v += w_poi", namespace={"w_poi": params["w_syn"] * params["f_poi"]})
+                S.connect(i=np.arange(len(idx)), j=idx)
+                neu.rfc[idx] = 0 * ms
+                objs += [P, S]
+            return objs, neu
+        shiu.poi = poi_group
     params = dict(shiu.default_params)
     params.update({"r_poi": args.rate * Hz, "n_run": args.n_run, "w_syn": wsyn_mv * mV,
                    "f_poi": 250 * 0.275 / wsyn_mv})
@@ -60,7 +84,8 @@ todo = [k for k in keys if not (OUT / f"{k}.parquet").exists()]
 print(f"{args.dataset}/{args.wsyn}: Wsyn {wsyn_mv:.4f} mV, {len(keys)} runs, {len(todo)} to do", flush=True)
 def run_chunk(key, cid, n):
     subprocess.run([sys.executable, __file__, "--dataset", args.dataset, "--wsyn", args.wsyn,
-                    "--rate", str(args.rate), "--n-run", str(n), "--_worker", f"{key}:{cid}"],
+                    "--rate", str(args.rate), "--n-run", str(n), "--poisson", args.poisson,
+                    "--out-suffix", args.out_suffix, "--_worker", f"{key}:{cid}"],
                    check=True, stdout=subprocess.DEVNULL, stderr=open(OUT / "_worker.log", "a"))
     return cid
 
@@ -83,7 +108,7 @@ for i, key in enumerate(todo):
     res = pd.concat(parts, ignore_index=True).rename(columns={"flywire_id": "node_id"})
     res.to_parquet(OUT / f"{key}.parquet")
     meta = {"run": key, "dataset": args.dataset, "wsyn": args.wsyn, "wsyn_mV": wsyn_mv, "rate_hz": args.rate,
-            "n_run": args.n_run, "t_run_s": 1.0, "trials_per_process": args.chunk, "jobs": args.jobs, "n_seed_neurons": len(seeds["runs"][key]),
+            "n_run": args.n_run, "t_run_s": 1.0, "trials_per_process": args.chunk, "jobs": args.jobs, "poisson": args.poisson, "n_seed_neurons": len(seeds["runs"][key]),
             "n_active_neurons": int(res["node_id"].nunique()), "elapsed_s": time.time() - t0,
             "date": time.strftime("%Y-%m-%d %H:%M")}
     (OUT / f"{key}.json").write_text(json.dumps(meta, indent=1))

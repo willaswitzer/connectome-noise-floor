@@ -1,0 +1,15 @@
+{
+ "run": "32fcdb0d3248",
+ "dataset": "flywire",
+ "wsyn": "primary",
+ "wsyn_mV": 0.275,
+ "rate_hz": 150.0,
+ "n_run": 30,
+ "t_run_s": 1.0,
+ "trials_per_process": 1,
+ "jobs": 2,
+ "n_seed_neurons": 122,
+ "n_active_neurons": 673,
+ "elapsed_s": 337.0031476020813,
+ "date": "2026-09-29 15:52"
+}

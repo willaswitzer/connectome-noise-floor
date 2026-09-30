@@ -1,0 +1,16 @@
+{
+ "run": "b98f0a629c8f",
+ "dataset": "male_cns",
+ "wsyn": "primary",
+ "wsyn_mV": 0.1890625,
+ "rate_hz": 150.0,
+ "n_run": 30,
+ "t_run_s": 1.0,
+ "trials_per_process": 1,
+ "jobs": 1,
+ "poisson": "group",
+ "n_seed_neurons": 87,
+ "n_active_neurons": 1032,
+ "elapsed_s": 313.7240583896637,
+ "date": "2026-09-29 20:52"
+}

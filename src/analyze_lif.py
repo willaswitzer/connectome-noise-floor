@@ -57,7 +57,8 @@ def unit_vector(d, run, scheme, trials=None, stim_side=None):
     rate = lab["node_id"].map(node_rates(d, run, trials)).fillna(0.0)
     key = lab[scheme]
     ok = key.notna()
-    v = rate[ok].groupby(key[ok].astype(str)).mean()
+    k = key[ok] if scheme == "r0" else key[ok].astype("int64").astype(str)  # stored as float
+    v = rate[ok].groupby(k).mean()
     if scheme == "r0":
         u, s = v.index.str.split("|").str[0], v.index.str.split("|").str[1]
         v.index = u + "|" + np.where(s == stim_side, "ipsi", "contra")

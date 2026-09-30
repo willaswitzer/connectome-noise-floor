@@ -1,0 +1,16 @@
+{
+ "run": "e9d5df51f871",
+ "dataset": "hemibrain",
+ "wsyn": "fixed",
+ "wsyn_mV": 0.275,
+ "rate_hz": 150.0,
+ "n_run": 30,
+ "t_run_s": 1.0,
+ "trials_per_process": 1,
+ "jobs": 2,
+ "poisson": "group",
+ "n_seed_neurons": 1,
+ "n_active_neurons": 7585,
+ "elapsed_s": 60.28296995162964,
+ "date": "2026-09-29 22:28"
+}

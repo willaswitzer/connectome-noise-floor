@@ -787,3 +787,52 @@ family would take about 55 h of laptop compute.
   - **Handling.** Wsyn is not re-tuned, because A1.4 excludes calibrating on simulation output.
     Activity (fraction of nodes active, spikes per trial) is reported for every run as a
     descriptive LIF result. The diagnostics were written to a scratch folder and are not used.
+- **2026-09-30, LIF case-study results (Amendment 7; descriptive, not used for H1–H4).**
+  - **Code.** `src/run_lif.py`, `src/analyze_lif.py`. Outputs: `results/lif/<primary|fixed>/`, with
+    per-trial spike counts for every run in `results/lif/runs/`.
+  - **Changes after the 2026-09-29 note** (implementation only; model and protocol unchanged):
+    - **Stimulus input.** From run 31 of 43 on FlyWire onward, every run uses one PoissonGroup plus
+      Synapses for all seeds, instead of Shiu's one PoissonInput per seed. The stimulus is the same:
+      an independent 150 Hz Poisson train per seed, adding 68.75 mV to v, with no refractory
+      period. The reason is speed. brian2 compiles each per-seed PoissonInput separately, which cost
+      tens of minutes per new seed set of several hundred neurons.
+    - **Equivalence check.** Two FlyWire runs (sugar_GRN R1; a 15-seed run with 5.8k neurons
+      active) were repeated with the new input. Unit vectors from the two implementations correlate
+      at ρ = 0.999, the same as the split-half ρ within the old implementation (0.999). Total rates
+      differ by < 0.1%, and MN9 is 100.5 vs. 100.3 Hz.
+    - Run metadata records `poisson` = `group` for new runs. It is absent for runs made with Shiu's
+      PoissonInput.
+    - FlyWire and male CNS trials run one at a time; two parallel FlyWire trials ran the
+      workspace out of memory.
+  - **Cross-dataset ρ (A4.1 rows), median [min, max], primary Wsyn:**
+    - R0 0.55 [−0.10, 0.78], n = 14
+    - R1 0.32 [0.04, 0.54], n = 14
+    - R2 0.18 [−0.46, 0.48], n = 10
+    - The linear medians for the same perturbations are 0.70, 0.79 and 0.73.
+    - LIF agreement is lower than linear for 36 of 38 perturbation × rung pairs. The exceptions are
+      sugar_GRN and bitter_GRN on R0.
+    - The LIF order is R0 > R1 > R2, as in the linear H4 result.
+  - **Fixed Wsyn (0.275 mV everywhere):** R0 is unchanged (FlyWire only), R1 0.22, R2 0.18. Male CNS
+    at 0.275 mV is more active: a median of 10.6% of nodes active, vs. 5.8% at 0.189 mV.
+  - **Activity (fraction of graph nodes active), median [min, max], primary:**
+    - FlyWire 0.8% [0.0, 4.2]
+    - male CNS 5.8% [0.1, 7.2]
+    - hemibrain 30.3% [0.8, 32.9]
+  - **Seed independence.** Responses to the five PN seeds (DA1, DM1, DC1, VA1v uPNs and VP2 hot
+    PN) are nearly the same within each dataset. Between different seeds, ρ is 0.96 (FlyWire), 0.97
+    (male CNS) and 0.99 (hemibrain), and the Jaccard overlap of active units is 0.90–0.96. Their
+    cross-dataset ρ therefore measures agreement of a shared high-activity state, not how each
+    seed's own signal propagates. That explains why their ρ is almost identical across seeds
+    (R1 0.46–0.48, R2 0.16–0.19).
+  - **Named readouts** (A1.6 item 2; R1/R2 need the target active in both datasets or silent in
+    both):
+    - sugar → MN9: active in FlyWire (85 Hz) and male CNS (41 Hz).
+    - LC4 → DNp01, DNp02, DNp11: active in all three datasets.
+    - LPLC2 → DNp01: active in all three; DNp02 and DNp11 silent in all three.
+    - LC10a → DNa02: active everywhere; hemibrain 3.8 Hz vs. FlyWire 100 Hz on R2.
+    - 15 of 16 R1/R2 checks agree. The disagreement is DNp11 under LPLC2 on R2, at 0.1 vs. 0 Hz.
+  - **Trial-count check (A7.4).**
+    - The unit vector from the first 10 trials correlates with the 30-trial vector at a median
+      ρ = 0.999 (minimum 0.89).
+    - Cross-dataset ρ from 10 trials differs from the 30-trial value by a median 0.004. The maximum
+      difference is 0.021 on R1/R2 and 0.138 on R0 (bitter_GRN, which has few active units).
