@@ -952,3 +952,63 @@ computed.
   - drift_real on each rung's rows (linear: drawn targets; LIF: case-study set)
   - the equivalent multiple m_eq on the combined and per-type curves
   - the measured per-neuron synapse loss and gain, compared with the injected rates at m_eq
+- **2026-10-07, Arm-2 injector (Amendment 8), recorded before any Arm-2 model output.**
+  - **Status.** No perturbed-graph model output exists. The only numbers below are structural
+    audits of the injected graphs (synapse counts and fractions) and runtimes. No drift has been
+    computed.
+  - **Code.** `src/inject_errors.py` (injector, grid, audit) and `tests/test_inject_errors.py`
+    (36 tests: rates, caps, reproducibility, eligibility, seed exemption, operator equivalence).
+    `linear_model.propagate` gains an optional `fix_cols` argument for seed-exempt flips. Existing
+    tests pass unchanged.
+  - **Choices not fixed by A8.1, fixed here:**
+    - **Neuropils.** Per-neuron, per-neuropil synapse counts come from the Princeton table,
+      restricted to pairs whose two ends are nodes of the v783 graph (79 neuropils). The top
+      neuropil is the one with the most input + output synapses. 2 graph nodes do not appear
+      in the table; their merge donors are drawn from all nodes.
+    - **False split.** Each edge end is detached independently with probability equal to the
+      rate: the pre end for the presynaptic neuron, the post end for the postsynaptic one. The
+      expected detached fraction of each neuron's synapses then equals the rate. All of a
+      neuron's detached ends go to one fragment node. Fragments carry the parent's sign
+      (after any flip) and are never stimulated.
+    - **False merge.** Receiver i gets F_i = S_i · r / (1 − r) foreign synapses, so the foreign
+      fraction of its own synapses is r. Each of the donor's edge ends is copied with probability
+      min(1, F_i / S_donor). If one donor is too small, more donors are drawn until less than half
+      a synapse is outstanding. Copies that would be i → i are dropped.
+    - **Spurious synapses.** round(rate × 54,492,922) synapses are added. Self-pairs are redrawn.
+    - **NT flips.** Eligible: sign ≠ 0 (137,752 nodes), tier-0 neurons included, as A8.1 says.
+      The 204 signed nodes with no `top_nt_conf` get the median weight of the eligible set.
+      Count = round(rate × eligible), drawn without replacement.
+    - **Combined order.** Missed → split → merge → spurious → flip. The split rate is applied to
+      the surviving synapses as split / (1 − missed), so the expected recall loss is exactly
+      missed + split. Merge copies use the original donor edges, so foreign synapses are never
+      thinned or split.
+    - **Seeds.** Injection seed k uses `default_rng(20260930 + k)`, k = 0–4. Each component draws
+      from its own child stream (`spawn`, order missed, split, merge, spurious, flip). A given k
+      therefore draws the same flips, merges and so on whether that component is injected alone
+      or within a combined condition.
+    - **Seed exemption (A8.2).** Flips are drawn once per (condition, k) for the whole graph. For
+      each perturbation, the flipped signs of its own seed neurons (and their fragments) are
+      restored for that perturbation only. This is exact and is implemented as a column sign
+      change during propagation. It applies to the rectified sensitivity row and, because they
+      run on the rectified model, to the flip component of the combined, lopsided and unproofread
+      conditions (P5, P6).
+  - **Grid (A8.3, after caps).** Single-type points dropped: spurious m = 25, 50; flip m = 10, 25,
+    50. Capped and flagged: combined and lopsided m = 10 (flip held at 0.5) and m = 25, 50 (spurious
+    at 1.0, flip at 0.5). That leaves 52 conditions × 5 seeds.
+  - **Structural audit (k = 0).** Realized rates match the targets:
+    - Recall loss at m = 1 is 0.80% (missed), 0.79% (split) and 0.80% (combined). Unproofread
+      recall loss is 20.1%.
+    - Spurious synapses at m = 1 are +5.0%. Flips at m = 1 are 8,265 neurons (6.0%).
+    - Two properties to note:
+      - Split errors are many small fragments. At m = 1, 89,956 neurons have a fragment, and the
+        median neuron loses 0.42% against a mean of 0.79%, because whole heavy-tailed edges are
+        moved. This is the uniform-sampling limitation already recorded in A8.1.
+      - Merge copies add foreign synapses to the donor's partners as well as to the receiver.
+        Counting both ends of every synapse, the foreign fraction is ≈ 2r/(1 + r): 1.6% at m = 1
+        rather than 0.8%. The receiver-side rate, which A8.1 defines, is r. Both rates are
+        reported.
+    - The largest point, combined m = 50, has 3.1× the original synapses (75.7M stored edges).
+  - **Runtime.** On 2 cores, a 50-perturbation batch takes about 11 s at m = 1 and about 55 s at
+    combined m = 50, plus about 30 s to load the base graph. The FlyWire side needs about 510
+    perturbation columns per injected graph. The R0 and A5.3 one-sided forms share the same seed
+    sets, so they are propagated once.
