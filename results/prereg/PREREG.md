@@ -836,3 +836,119 @@ family would take about 55 h of laptop compute.
       ρ = 0.999 (minimum 0.89).
     - Cross-dataset ρ from 10 trials differs from the 30-trial value by a median 0.004. The maximum
       difference is 0.021 on R1/R2 and 0.138 on R0 (bitter_GRN, which has few active units).
+
+## Amendment 8 — 2026-09-30 (before any Arm-2 code or output; finalizes A1.8, resolves A5.5)
+
+**Status at time of amendment.** No error injector, perturbed graph, v630 graph or Arm-2 output
+exists. Seen so far: linear H1–H4, α/K, E1, E2, the v783 checkpoint, and the LIF case-study
+results (Amendment 7). The rung disagreements used as break-even targets are therefore already
+known. The error model, grid, estimator and predictions below are fixed before any drift is
+computed.
+
+### A8.1 Error types and injection rules (replaces the A1.8 table)
+
+- Injections act on the FlyWire v783 scoped graph (A2.7; Buhmann synapses; no threshold).
+- Rates are multiples *m* of a per-type anchor.
+- The synapse table has no coordinates. "Co-located" therefore means sharing a neuropil in
+  `connections_princeton_no_threshold`.
+
+| Type | Rate unit | Rule | Anchor (m = 1) |
+|---|---|---|---|
+| Missed synapse | fraction of a neuron's synapses removed | Each synapse is removed independently (binomial thinning of every edge count). | 0.8% |
+| False split | fraction of a neuron's synapses detached | Whole partner edges are chosen uniformly and moved to a new untyped fragment node. The fragment stays in the graph and belongs to no unit. | 0.8% |
+| False merge | fraction of a neuron's synapses that are foreign | Edges of a random donor that shares the neuron's top neuropil are copied onto it. The donor keeps its edges. | 0.8% |
+| Spurious synapse | synapses added, as a fraction of the total | Neuropil drawn ∝ its synapse count; pre ∝ output synapses there; post ∝ input synapses there; +1 synapse. Repeated. | 5% (Buhmann et al. 2021) |
+| NT mislabel | fraction of neurons with E↔I flipped | Drawn with probability ∝ (1 − `top_nt_conf`). Neurons with no sign are not eligible. | 6% (Eckstein et al. 2024) |
+
+- **Merge and split anchors.** Precision and recall are set equal to the published proofread
+  assigned-synapse F1: median 0.992 (Dorkenwald et al. 2022, Nat Methods, Ext. Data Fig. 6b;
+  n = 60 neurons). Each synapse-level anchor is therefore 0.8%. This replaces A1.8's "~1%".
+- **Combined.** The segmentation errors are scaled together so that a neuron's assigned-synapse
+  F1 against the original graph is 1 − 0.008m:
+  - recall loss 0.8%·m, split equally between missed synapses and false splits
+  - precision loss 0.8%·m (false merge)
+  - spurious synapses at 5%·m and NT flips at 6%·m
+- **Lopsided (descriptive).** The same total as the combined condition, but with recall loss to
+  precision loss 3:1 (1.2%·m vs. 0.4%·m). This covers the observation that residual errors are
+  mostly orphan twigs (Dorkenwald et al. 2024).
+- **Unproofread condition (for P6).** Segmentation errors at m_u = (1 − 0.799)/(1 − 0.992) ≈ 25,
+  with spurious synapses and NT flips at m = 1. Proofreading changes segmentation only, not
+  synapse detection or transmitter prediction.
+- **Caps.** Removal, detachment, merge and flip fractions are capped at 0.5; spurious synapses at
+  1.0. Single-type grid points above a cap are dropped. In the combined condition, a capped
+  component is held at its cap and flagged.
+- **Limitations** (recorded here):
+  - The neuron sample is small and hand-picked (n = 60).
+  - Uniform sampling understates rare, large errors. There is no hub-concentrated condition.
+- **Section loss** is dropped from Arm 2. It is named as future work, relevant to serial-section
+  EM and expansion microscopy.
+
+### A8.2 NT mislabel and the rectifier (resolves A5.5)
+
+- **Linear primary:** the unrectified model (A5.2), compared against the unrectified rung
+  disagreements.
+- **Sensitivity:** the rectified model, with seed neurons exempt from flips.
+- **LIF:** seed-exempt only.
+  - The LIF NT row is therefore not like-for-like with the linear NT row. It is footnoted as such.
+  - NT break-even rates are reported against their own disagreement targets and are not rescaled.
+- The other types use the rectified primary model.
+
+### A8.3 Grid, perturbations, trials
+
+- **Linear:**
+  - m ∈ {0.5, 1, 2, 3, 5, 10, 25, 50}, plus the unproofread condition.
+  - 5 injection seeds per (type, m), using `default_rng(20260930 + k)`.
+  - Perturbations: the 134-target draw on its A2.4 rung sets. The case-study set is reported
+    separately.
+- **LIF:**
+  - Case-study set, FlyWire only.
+  - m ∈ {1, 3, 10}, 3 injection seeds, per type. The combined condition only if time allows; it is
+    cut first.
+  - 10 trials per run (A7.4; 2026-09-30 LIF results note: median |Δρ| from 30 → 10 trials is
+    0.004).
+  - Noise floor: each perturbation is re-run unperturbed with 3 fresh Poisson seeds.
+
+### A8.4 Drift and break-even
+
+- **Drift** for target *t* on rung R: 1 − ρ(perturbed, unperturbed FlyWire), on the FlyWire side of
+  R's own A4.1 rows (same seeds, readout units, seed removal and double-zero rule). It is averaged
+  over injection seeds.
+- **Rung disagreement:** D_R = median over the same targets of 1 − raw ρ_R.
+- **LIF, like for like:** both sides use 10-trial vectors. D_R comes from the first 10 trials of the
+  Amendment-7 runs.
+- **Break-even** m*_R: the smallest m at which median drift ≥ D_R, interpolated linearly in log m.
+  If it is never reached, it is reported as "> max m".
+  - 95% CI from 1,000 bootstrap resamples of targets (drift and D_R resampled jointly),
+    `default_rng(20260930)`.
+  - Reported per type × model × rung, both as m* and as an absolute rate.
+  - Secondary readouts: A1.6 items 2–3, and per-target break-even.
+- **LIF targets (post hoc):** R2 is not a LIF break-even target.
+  - Hemibrain LIF has a median of 30% of nodes active vs. 0.8% in FlyWire, and A1.4 forbids
+    retuning Wsyn.
+  - R2 LIF drift is reported descriptively.
+  - LIF break-even on R0 and R1 uses the 9 seed-specific case-study perturbations as primary. The
+    5 PN seeds are reported as a separate shared-state row.
+
+### A8.5 Predictions (confirmatory; rectified linear model; R0 in its A5.3 like-for-like form)
+
+- **P5:** combined-condition drift at m = 1 is below D_R0.
+- **P6:** unproofread-condition drift is below D_R0. Failure to support P6 is treated as the
+  substantive result.
+- **Test:** one-sided. A prediction is supported if the 95% bootstrap lower bound of
+  D_R0 − drift is > 0. Holm correction is applied over the two predictions.
+
+### A8.6 Real-error condition (specifies A1.9)
+
+- **v630 graph:** `2023_03_23_connectivity_630_final.parquet`, processed exactly as v783 (A2.7,
+  A3.4 signs by mapped type, no threshold).
+  - Check: rebuilding v783 through the same code reproduces the Amendment-7 edge and synapse
+    totals.
+- **Mapping:** each v783 neuron's annotation `supervoxel_id` is looked up at `mat_630` (CAVE).
+  - Accepted when the map is one-to-one.
+  - A v630 root that receives more than one v783 neuron is counted as a v630 merge, then excluded.
+- **Drop rule:** the condition is dropped if fewer than 80% of the neurons in the readout units and
+  seed sets map.
+- **Outputs:**
+  - drift_real on each rung's rows (linear: drawn targets; LIF: case-study set)
+  - the equivalent multiple m_eq on the combined and per-type curves
+  - the measured per-neuron synapse loss and gain, compared with the injected rates at m_eq
