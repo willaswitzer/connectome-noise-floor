@@ -79,18 +79,30 @@ def load_graph(name, sign_col="sign", edge_filter=False, sign_ablate=False, reno
                  node_map("r2_unit_pre", "r2_unit_post"))
 
 
-def propagate(A, seeds, alpha=0.5, K=5, rectify=True):
+def propagate(A, seeds, alpha=0.5, K=5, rectify=True, fix_cols=None):
     """seeds: list of arrays of node indices (one per perturbation). Returns N x B array R.
     rectify=False is the unrectified sensitivity model (Amendment 5): negative values are
-    kept as suppression."""
+    kept as suppression.
+    fix_cols (Arm 2, A8.2 seed-exempt NT flips): optional list, one array per perturbation, of
+    presynaptic node indices whose sign is negated for that perturbation only (their columns
+    of A are multiplied by -1). None or empty arrays leave A unchanged."""
     n, B = A.shape[0], len(seeds)
+    fix = None
+    if fix_cols is not None and any(len(f) for f in fix_cols):
+        A_csc = A.tocsc()
+        fix = [(b, A_csc[:, f]) for b, f in enumerate(fix_cols) if len(f)]
+        fix_idx = {b: f for b, f in enumerate(fix_cols) if len(f)}
     r = np.zeros((n, B))
     for b, idx in enumerate(seeds):
         r[idx, b] = 1.0
     R = np.zeros_like(r)
     AT = A  # A is post x pre, so A @ r gives input to each post neuron
     for _ in range(K):
-        r = alpha * (AT @ r)
+        x = AT @ r
+        if fix is not None:
+            for b, Ab in fix:
+                x[:, b] -= 2.0 * (Ab @ r[fix_idx[b], b])
+        r = alpha * x
         if rectify:
             r = np.maximum(0.0, r)
         R += r
