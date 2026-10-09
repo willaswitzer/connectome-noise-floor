@@ -1045,3 +1045,48 @@ computed.
     computed. The computer holding this file was offline at that moment, so the note was appended
     after P5/P6 and the partial break-even table had been computed (about 14:30 ET). The text above
     is unchanged from the approved draft.
+- **2026-10-08, Arm-2 linear results (Amendment 8; A8.4–A8.5).** Code: `src/run_arm2_linear.py`,
+  `src/arm2_analyze.py`. Outputs: `results/arm2/linear/`. Full grid: 287 runs, which is 52 conditions ×
+  5 injection seeds plus the two unperturbed base runs, with no failures. Computed in the Linux
+  lock-version environment.
+  - **Predictions** (rectified model, R0 in its A5.3 form R0ipsi, n = 107 drawn targets;
+    D_R0ipsi = 0.476):
+    - **P5 supported.** Combined condition, m = 1: median drift 0.294. D_R0 − drift = 0.181 (95% CI
+      0.147–0.213; one-sided 95% lower bound 0.154). Holm p = 0.002.
+    - **P6 not supported.** Unproofread condition: median drift 0.612. D_R0 − drift = −0.136 (95% CI
+      −0.156 to −0.100). Holm p = 1.0. Per A8.5, this is the substantive result. Segmentation at
+      unproofread accuracy, with spurious synapses and NT flips at their anchors, changes the model's
+      predictions more than the left–right difference within one fly does.
+  - **Break-even m\* [95% CI]** (absolute rate in parentheses; "> max" means no crossing up to the
+    largest grid point that survived the caps):
+    - Combined: R0 2.50 [2.03, 3.27] (2.0% synapse-level error); R1 2.18 [1.79, 2.85] (1.7%); R2 7.80
+      [5.11, 16.1] (6.2%).
+    - Lopsided (descriptive): R0 2.63, R1 2.22, R2 8.11, close to the combined values.
+    - NT flips, unrectified (NT primary, compared with the unrectified D_R): R0 3.24 [3.04, 3.46]
+      (19% of neurons); R1 3.50 [3.22, 3.83] (21%); R2 > 5.
+    - NT flips, rectified with seeds exempt (sensitivity): > 5 on every rung.
+    - Spurious synapses: R0 6.16 [4.59, 9.00] (31%); R1 4.49 [3.61, 6.41] (22%); R2 > 10.
+    - False merges: R0 18.4 [16.1, 25.1] (15% foreign on the receiver side); R1 16.1 [13.5, 21.4]
+      (13%); R2 47.1 [35.5, > 50].
+    - Missed synapses and false splits: > 50 on every rung, that is, still below disagreement at 40%
+      loss.
+  - **Median drift on R0 at m = 1, by type:** missed 0.004, split 0.025, merge 0.073, spurious 0.194,
+    NT unrectified 0.151, NT rectified with seeds exempt 0.103, combined 0.294.
+    - The model is nearly insensitive to losing synapses and sensitive to gaining them.
+    - In the combined condition, spurious synapses and NT flips dominate.
+    - R2 break-evens are the largest because D_R2 is large relative to drift on its 41 targets. R2
+      comparisons are also limited by hemibrain truncation (A5.3).
+  - **Merge rates.** Counting both ends of every synapse, the foreign fraction is about 2r/(1 + r);
+    see the 2026-10-07 implementation note. The receiver-side rates are given above.
+- **2026-10-08, exploratory check of the spurious-synapse effect (not pre-registered; seen after
+  the results above).** The question was whether spurious-synapse drift is a Spearman artifact:
+  units that were silent before and now respond weakly would enter the rank correlation.
+  - Rung R1, injection seed 0. Drift was recomputed only on rows that are nonzero in both the
+    perturbed and the unperturbed vector.
+  - spur m = 1: 0.161 on all A4.1 rows vs. 0.117 on rows nonzero in both. On median, 4% of rows
+    become newly nonzero, and they carry 0.3% of the response mass.
+  - Combined m = 1: 0.226 vs. 0.179. Merge m = 1: 0.056 vs. 0.041.
+  - Reading: about a quarter of the spurious drift comes from newly active rows. The rest is
+    reordering among units already active. It is a real sensitivity of rank agreement to added
+    weak inputs, consistent with E1 (weak edges carry shared signal), and is not mainly a row-set
+    artifact.
