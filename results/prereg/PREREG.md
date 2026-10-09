@@ -1012,3 +1012,36 @@ computed.
     combined m = 50, plus about 30 s to load the base graph. The FlyWire side needs about 510
     perturbation columns per injected graph. The R0 and A5.3 one-sided forms share the same seed
     sets, so they are propagated once.
+- **2026-10-08, Arm-2 linear analysis (A8.4–A8.5), fixed before any drift was computed or viewed.**
+  - **Code.** `src/run_arm2_linear.py` writes FlyWire-side vectors only (float32).
+    `src/arm2_analyze.py` computes drift, curves, break-even and P5/P6. Outputs go to
+    `results/arm2/linear/`.
+  - **Check.** The unperturbed graph, run through the Arm-2 runner, reproduces the Arm-1 FlyWire
+    vectors (max relative difference 3.7e-08). Running drift on the base run against itself gives
+    0 on every rung.
+  - **Choices not fixed by A8.4:**
+    - **R0 and R0ipsi.** Both sides of these rungs are FlyWire, so both are perturbed. Drift is
+      computed separately for the left-stimulation and right-stimulation vectors on the rung's
+      A4.1 rows, and the two are averaged.
+    - **Rows.** A4.1 step 2 is applied against the other dataset of the rung: male CNS for R1,
+      hemibrain for R2, and the opposite-side FlyWire vector for R0 and R0ipsi. Seed rows are
+      removed, and so are rows that are zero in both the perturbed and unperturbed vector.
+    - **Abolished responses.** A perturbed vector that is identically zero while the unperturbed
+      one is not gets drift = 1 (ρ taken as 0), not NA.
+    - **D_R** is read from the Arm-1 A4.1 tables (`results/linear/<cond>/rho_<rung>.csv`), using
+      the model-matched condition: unrectified for the NT primary, rectified otherwise. It is
+      taken over the same targets as the drift. Recomputing it from the float32 Arm-2 base run
+      reproduces the tables to ≤ 1e-3; the differences come from ties among tiny R0 values.
+    - **Break-even.** m* is the first crossing of median drift over D_R. If the first grid point
+      already crosses, it is reported as "≤ min m"; if no point crosses, as "> max m". In the
+      bootstrap, "> max m" is treated as ∞ when computing CIs. The absolute rate is m* × the
+      family's anchor (combined and lopsided: 0.8%, the recall/precision anchor).
+    - **P5/P6 test.** The statistic is median(1 − ρ_R0ipsi) − median(drift) over the same drawn
+      targets. One-sided bootstrap p = (1 + #{resampled statistic ≤ 0}) / 1001; Holm is applied
+      over the two predictions, and a prediction is supported if Holm p < 0.05. The two-sided
+      95% CI and the one-sided 95% lower bound are also reported. With one test, this is the
+      same as A8.5's "lower bound > 0"; Holm makes the threshold stricter for the larger p.
+  - **Order of events.** This note was approved at 2026-10-08 14:17 ET, before any drift had been
+    computed. The computer holding this file was offline at that moment, so the note was appended
+    after P5/P6 and the partial break-even table had been computed (about 14:30 ET). The text above
+    is unchanged from the approved draft.
