@@ -1,0 +1,32 @@
+{
+ "P5": {
+  "condition": "combined_m1",
+  "n_targets": 107,
+  "D_R0ipsi": 0.47552287633950485,
+  "median_drift": 0.29436735455000507,
+  "diff": 0.18115552178949978,
+  "ci95": [
+   0.14706296601975843,
+   0.21334612156976696
+  ],
+  "lower_bound_one_sided_95": 0.15356488335674487,
+  "p_boot_one_sided": 0.000999000999000999,
+  "p_holm": 0.001998001998001998,
+  "supported": true
+ },
+ "P6": {
+  "condition": "unproofread",
+  "n_targets": 107,
+  "D_R0ipsi": 0.47552287633950485,
+  "median_drift": 0.6117253029513083,
+  "diff": -0.13620242661180348,
+  "ci95": [
+   -0.15619703064379303,
+   -0.09978628731291234
+  ],
+  "lower_bound_one_sided_95": -0.1525125374204031,
+  "p_boot_one_sided": 1.0,
+  "p_holm": 1.0,
+  "supported": false
+ }
+}
