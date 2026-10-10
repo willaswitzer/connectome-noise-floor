@@ -1090,3 +1090,44 @@ computed.
     reordering among units already active. It is a real sensitivity of rank agreement to added
     weak inputs, consistent with E1 (weak edges carry shared signal), and is not mainly a row-set
     artifact.
+- **2026-10-10, Arm-2 real-error condition (A8.6), choices fixed before any v630 model output.**
+  - **Mapping.** `src/map_v630.py` was run on the laptop, which has CAVE access, on 2026-10-09.
+    Every v783 annotation `supervoxel_id` was looked up in `flywire_fafb_public` at the
+    materialization-630 timestamp (2023-03-21 08:10 UTC).
+    - All 139,248 neurons returned a root. 136,682 map one-to-one.
+    - 1,055 v630 roots each receive more than one v783 neuron (v630 merges), covering 2,566 v783
+      neurons.
+    - 127,023 of the one-to-one roots are present in the v630 connectivity table.
+  - **Drop rule (A8.6).** The rule is read as pooled over the neurons in the readout units and the
+    seed sets. "Mapped" means one-to-one and present in the v630 connectivity table.
+    - Readout-unit neurons that are v783 graph nodes: 91.6% of 132,877 map, so the condition is kept.
+    - Per drawn target, 132 of 134 seed sets are ≥ 80% mapped (median 100%). The exceptions are R1-6
+      (unit 6298; 30% of 8,452 neurons) and R7 (unit 6299; 36% of 1,342). These photoreceptors were
+      largely reconstructed after v630. drift_real is reported with and without these two targets.
+    - Case-study seed sets are 94–100% mapped.
+  - **v630 graph.** Shiu's `2023_03_23_connectivity_630_final.parquet` (Buhmann synapses, no
+    threshold) is read through the same code as v783.
+    - One-to-one roots are relabelled to their v783 IDs.
+    - v630 merges and v630 roots with no v783 counterpart are kept as unlabeled nodes. They are
+      never seeded or read out, like split fragments in the injector.
+    - v783 neurons absent from the v630 table are isolated nodes: seeding one has no effect.
+  - **Signs.**
+    - Mapped neurons take their v783 A3.4 sign.
+    - A v630 merge takes the sign of its v783 neurons if they all agree, otherwise 0.
+    - Unmapped v630 roots take 0, which is A3.4's "no call" (primary). The sensitivity condition
+      uses Shiu's v630 `Excitatory` column for these roots.
+  - **Check.** The same reader applied to `Connectivity_783.parquet` must reproduce the Amendment-7
+    totals: 15,091,983 edges and 54,492,922 synapses.
+  - **Models and readouts.** As in the sweep: rectified for drift_real against the combined and
+    segmentation curves, unrectified for comparison with the unrectified NT curve. Seeds, readout
+    units, rows and the drift definition are those of the 2026-10-08 analysis note. There is a
+    single "injection", so no averaging over seeds.
+  - **m_eq.** The median drift_real over drawn targets on each rung is placed on the median-drift
+    curve of each family by linear interpolation in log m. If it is below the smallest grid point,
+    it is reported as "< 0.5"; if above the largest, as "> max".
+  - **Measured loss and gain.** For neurons that are one-to-one and present in both graphs, synapse
+    ends are matched by mapped partner and pair, the same rule as the injector audit:
+    - loss = 1 − matched / v783 ends
+    - gain = 1 − matched / v630 ends
+    Both are reported pooled and as a per-neuron median, and are compared with the injected rates
+    at m_eq.
