@@ -1,0 +1,7 @@
+{
+ "n_neurons": 127015,
+ "loss_pooled": 0.02851263950060845,
+ "gain_pooled": 0.008218103527028231,
+ "loss_median_neuron_ge100": 0.015408945323581003,
+ "gain_median_neuron_ge100": 0.002373417721519
+}

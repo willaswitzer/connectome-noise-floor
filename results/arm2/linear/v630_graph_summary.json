@@ -1,0 +1,13 @@
+{
+ "v783_edges": 15091983,
+ "v783_synapses": 54492922,
+ "v630_edges": 14687178,
+ "v630_synapses": 52793639,
+ "v630_nodes": 127400,
+ "mapped_one_to_one_nodes": 136152,
+ "mapped_in_v630_graph": 127015,
+ "extra_nodes": 385,
+ "extra_merges": 239,
+ "extra_unmapped": 146,
+ "v783_nodes_absent_in_v630": 11624
+}
