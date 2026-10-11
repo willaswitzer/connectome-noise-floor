@@ -1131,3 +1131,35 @@ computed.
     - gain = 1 − matched / v630 ends
     Both are reported pooled and as a per-neuron median, and are compared with the injected rates
     at m_eq.
+- **2026-10-10, Arm-2 real-error results (A8.6).** Code: `src/run_v630_linear.py`,
+  `src/arm2_v630_analyze.py`. Outputs: `results/arm2/linear/v630_*`.
+  - **Check passed.** The reader reproduces the v783 totals: 15,091,983 edges and 54,492,922
+    synapses.
+  - **v630 graph.** 14,687,178 edges, 52,793,639 synapses and 127,400 nodes.
+    - 127,015 of its nodes map one-to-one to v783 graph nodes.
+    - 385 are unlabeled: 239 v630 merges and 146 unmapped roots.
+    - 11,624 v783 graph nodes have no v630 counterpart.
+  - **Measured change, v783 → v630,** on the 127,015 one-to-one neurons, synapse ends matched by
+    mapped partner:
+    - loss 2.85% pooled (median neuron 1.5%)
+    - gain 0.82% pooled (median neuron 0.24%)
+    - The edit profile is mostly losses, the opposite of the combined condition, which adds 5%
+      spurious synapses and 6% NT flips at m = 1. Neither of those differs between the two
+      releases here, since detection and signs are shared.
+  - **drift_real,** median over drawn targets [90th percentile, max]:
+    - Rectified: R0 0.008 [0.016, 0.032]; R1 0.004 [0.009, 0.023]; R2 0.002 [0.008, 0.019].
+    - Unrectified: R0 0.007; R1 0.006; R2 0.004 (max 0.12).
+    - For comparison, D_R is 0.35–0.48 (rectified) and 0.54–0.70 (unrectified).
+    - Excluding R1-6 and R7 does not change any median. The photoreceptors are inhibitory, so
+      they are NA in the rectified model. In the unrectified model, n drops from 133 to 131 on R0.
+    - The sensitivity signs (Shiu's `Excitatory` for unmapped roots) change medians by ≤ 0.001.
+  - **m_eq.**
+    - Below the smallest grid point (< 0.5) on the combined, lopsided, split, merge and spurious
+      curves, and on the unrectified NT curve.
+    - On the missed-synapse curve: R0 1.9, R1 1.6, R2 2.1. That corresponds to 1.3–1.7% injected
+      loss, against 2.85% measured loss.
+  - **Reading.** The proofreading between v630 and v783 changed the linear
+    model's predictions by about 2% of the left–right disagreement (0.008 vs. 0.48). The synthetic error
+    model's main drivers, spurious synapses and NT flips, are absent from a release-to-release
+    comparison by construction. This condition therefore bounds segmentation edits on already
+    proofread neurons. It does not bound the full error budget.
