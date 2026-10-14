@@ -1163,3 +1163,49 @@ computed.
     model's main drivers, spurious synapses and NT flips, are absent from a release-to-release
     comparison by construction. This condition therefore bounds segmentation edits on already
     proofread neurons. It does not bound the full error budget.
+- **2026-10-14, Arm-2 LIF sweep (A8.3–A8.4): implementation and results.** The implementation
+  choices below were made before the LIF drift was computed; the results follow.
+  - **Code.** `src/run_arm2_lif.py` (runs), `src/arm2_lif_analyze.py` (drift, break-even). Outputs:
+    `results/arm2/lif/`. Computed in the Linux lock-version environment, with Brian2 2.10.1.
+  - **Runs.** FlyWire only. Each graph runs the 43 distinct case-study seed sets of the Amendment-7
+    FlyWire runs, with 10 trials per run.
+    - Noise floor: the unperturbed v783 graph, re-run 3 times.
+    - Each error type at m ∈ {1, 3, 10} with injection seeds k = 0–2. NT flips at m = 10 are dropped
+      by the cap. The combined condition was not run (A8.3: cut first).
+    - Total: 45 graphs, 1,935 runs.
+    - Model as in Amendment 7. The setup check reproduced MN9 at 100 Hz for sugar GRNs.
+  - **Implementation choices:**
+    - **Drift reference.** The unperturbed vector is the first 10 trials of the Amendment-7 FlyWire
+      run (A8.4, like for like).
+    - **Rows.** Rows are limited to those present in the rung's other dataset (R1: male CNS units;
+      R2: hemibrain R2 units). R0 uses the opposite-side FlyWire vector, and its drift is the mean
+      of the left- and right-stimulation drifts. The rest is as in the 2026-10-08 linear analysis
+      note. Fragment nodes have no unit and are never read out.
+    - **Seed exemption (A8.2).** For each run, the flipped signs of its own seed neurons and their
+      fragments are restored, by negating their outgoing weights in that run only.
+    - **Trials.** One trial per subprocess, as in Amendment 7. Two trials run in parallel; on out of
+      memory a trial is re-run alone, and a graph switches to one at a time once half its trials
+      fail in parallel. From spurious m = 10 onward, workers read only the three connectivity
+      columns `model.py` uses (`Presynaptic_Index`, `Postsynaptic_Index`,
+      `Excitatory x Connectivity`), as int32, because that graph did not fit in memory otherwise.
+      The values are identical.
+    - The sweep was interrupted 5 times (3 workspace restarts, 2 out-of-memory crashes). Finished runs were kept, and
+      interrupted runs were re-run from scratch.
+  - **Noise floor** (unperturbed reruns vs. Amendment 7), median drift: R0 0.005, R1 0.003, R2 0.003
+    (max 0.10, R0).
+  - **Median drift, 9 seed-specific perturbations, m = 1 / 3 / 10** (D_R: R0 0.54, R1 0.77, R2 0.75):
+    - NT flips: R0 0.27 / 0.70; R1 0.25 / 0.63; R2 0.22 / 0.57
+    - Merges: R0 0.03 / 0.12 / 0.35; R1 0.03 / 0.09 / 0.27
+    - Splits: R0 0.04 / 0.11 / 0.32; R1 0.05 / 0.08 / 0.24
+    - Spurious: R0 0.02 / 0.04 / 0.11; R1 0.01 / 0.04 / 0.10
+    - Missed: R0 0.010 / 0.017 / 0.046; R1 0.007 / 0.011 / 0.035
+  - **Break-even m\* [95% CI]** (R0 and R1 are targets; R2 is descriptive, A8.4):
+    - NT flips, seed-specific: R0 2.0 [1.5, > 3] (12% of neurons); R1 > 3.
+    - NT flips, PN shared-state row: R0 1.2 [1.2, 1.2] (7%); R1 1.9 [1.8, 2.2] (12%).
+    - Every other type: > 10 on every rung and row (> 3 for NT flips).
+  - **Reading.**
+    - In LIF only transmitter-sign errors reach the left–right disagreement within the grid.
+    - Segmentation errors and spurious synapses stay below a third of D_R even at 10× their anchors.
+    - This is the opposite of the linear model on spurious synapses: linear crossed at m ≈ 4.5–6,
+      LIF drift is 0.10–0.11 at m = 10.
+    - LIF break-even rates rest on 9 perturbations; the CIs are wide and open-ended.
