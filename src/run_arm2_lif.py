@@ -39,6 +39,9 @@ ap.add_argument("--max-graphs", type=int, default=0)
 ap.add_argument("--jobs", type=int, default=2, help="trials in parallel (~2.7 GB each on v783)")
 ap.add_argument("--_worker", nargs=4, default=None, help=argparse.SUPPRESS)
 ap.add_argument("--_write", nargs=2, default=None, help=argparse.SUPPRESS)
+ap.add_argument("--ntcm", default="", help="exploratory 2026-10-15: comma list of run_nt_realistic.py "
+                "conditions to run instead of the A8.3 grid (k = 0-2)")
+ap.add_argument("--rungs", default="", help="only runs serving these rungs, e.g. R0,R1 (default: all)")
 args = ap.parse_args()
 
 
@@ -97,6 +100,8 @@ import inject_errors as ie
 
 
 def graph_list():
+    if args.ntcm:
+        return [(c, f"k{k}", ("ntcm", c, k)) for k in range(3) for c in args.ntcm.split(",")]
     out = [("base", f"r{i}", None) for i in range(3)]
     for m in (1, 3, 10):
         for t in ie.TYPES:
@@ -118,8 +123,15 @@ def write_graph(gdir, spec, base):
                 shutil.copy(L / f, gdir / f)
         ids = pd.read_csv(gdir / "completeness.csv", index_col=0).index.to_numpy()
         return ids, np.zeros(0, np.int64), np.zeros(0, np.int64)
-    rates, k = spec
-    pert = ie.inject(base, rates, k)
+    if spec[0] == "ntcm":   # exploratory 2026-10-15: confusion-matrix flips (run_nt_realistic.py)
+        import run_nt_realistic as ntr
+        _, cond, k = spec
+        flipped, rates, _ = ntr.draw_flips(cond, base, k)
+        rates = {"ntcm": cond, "cross_sign_rates": rates}
+        pert = ntr.perturbed(base, flipped, k)
+    else:
+        rates, k = spec
+        pert = ie.inject(base, rates, k)
     pre, post, w = pert.edges()
     nfr = len(pert.frag_parent)
     ids = np.concatenate([base.ids, FRAG_ID0 + np.arange(nfr, dtype=np.int64)])
@@ -141,7 +153,8 @@ def write_graph(gdir, spec, base):
 def write_in_subprocess(cond, rep, gdir):
     """Write the injected graph in a child process, so the driver never holds the ~1.5 GB base
     graph while the two LIF workers run."""
-    subprocess.run([sys.executable, __file__, "--_write", cond, rep], check=True)
+    subprocess.run([sys.executable, __file__, "--_write", cond, rep]
+                   + (["--ntcm", args.ntcm] if args.ntcm else []), check=True)
     z = np.load(gdir / "flips.npz")
     ids = pd.read_csv(gdir / "completeness.csv", index_col=0).index.to_numpy()
     return ids, z["flipped"], z["frag_parent"]
@@ -155,7 +168,11 @@ def main():
         ids, flipped, fparent = write_graph(gdir, spec, ie.load_flywire_base())
         np.savez(gdir / "flips.npz", flipped=flipped, frag_parent=fparent)
         return
-    seeds = json.loads((L / "seeds.json").read_text())["runs"]
+    sj = json.loads((L / "seeds.json").read_text())
+    seeds = sj["runs"]
+    if args.rungs:
+        keep = {x["run"] for x in sj["index"] if x["rung"] in args.rungs.split(",")}
+        seeds = {k: v for k, v in seeds.items() if k in keep}
     base = None
     n_graphs = 0
     for cond, rep, spec in graph_list():

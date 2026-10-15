@@ -105,7 +105,10 @@ def perturbed(base, flipped, k):
     sign = base.sign.copy()
     sign[flipped] *= -1
     parts = [tuple(x.astype(np.int32) for x in (base.pre, base.post, base.w))]
-    return ie.Perturbed(parts, sign, base.n, np.zeros(0, np.int64), flipped, {}, [], k)
+    # no structural change: every original synapse end retained, none added (for ie.audit)
+    retained = ie._ends(base.pre, base.post, base.w, base.n)
+    return ie.Perturbed(parts, sign, base.n, np.zeros(0, np.int64), flipped, {}, [], k,
+                        retained, np.zeros(base.n))
 
 
 def run(labels):

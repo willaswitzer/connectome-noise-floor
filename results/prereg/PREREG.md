@@ -1321,3 +1321,36 @@ computed.
   - **Caveat.** Known types are not a random sample (80% optic lobe; well-studied central
     types). Tier 1–3 neurons are by definition of unknown type and may be predicted worse.
     The central, unfiltered row (4.0% of tier 1–3) is the closest proxy.
+- **2026-10-15, exploratory: LIF at the hemibrain-matrix transmitter rates (not pre-registered;
+  run after all results above were seen).** The two pessimistic conditions of the 2026-10-15
+  confusion-matrix entry (`ntcm_hemi_neuron`, `ntcm_hemi_type`; about 3.5% of signed neurons
+  flipped) were run in the A8.3 LIF setup. Everything is as in the 2026-10-14 LIF sweep:
+  - the case-study set and its 43 FlyWire seed sets, 10 trials each, 3 draws (k = 0–2)
+  - seed-exempt flips
+  - drift against the first 10 trials of the Amendment-7 runs
+  - D_R = 1 − rho_10
+  The FAFB-matrix conditions were not run in LIF.
+  - **Code.** `src/run_arm2_lif.py` gains `--ntcm <conditions>` (the default A8.3 behaviour is
+    unchanged). `src/nt_realistic_lif_analyze.py` computes the drift. Output:
+    `results/arm2/lif/ntcm_summary.csv`, `ntcm_drift_per_rep.csv`.
+  - **Inputs.** The FlyWire LIF inputs were rebuilt with `src/lif_prep.py --datasets flywire` in a
+    fresh environment. The rebuilt `seeds.json` is identical to
+    `results/lif/runs/flywire/seeds.json` (all 43 runs, 52 index rows).
+  - **Interruptions.** The run was interrupted twice by workspace restarts. Finished seed sets
+    were kept and unfinished ones re-run from scratch.
+  - **Results.** Median drift as a fraction of D_R, with the 95% bootstrap CI of D_R − drift
+    in brackets:
+
+    | Condition | R0, seed-specific (9) | R0, PN shared (5) | R1, seed-specific | R1, PN shared |
+    |---|---|---|---|---|
+    | Per neuron | 0.63 [0.09, 0.42] | 0.59 [0.12, 0.13] | 0.43 [0.40, 0.67] | 0.26 [0.39, 0.40] |
+    | Per cell type | 0.75 [−0.03, 0.51] | 0.81 [0.06, 0.07] | 0.48 [0.27, 0.66] | 0.44 [0.28, 0.32] |
+
+  - **Reading.**
+    - In no condition does median drift reach D_R.
+    - At the hemibrain-matrix rate with type-clustered errors, the R0 seed-specific interval
+      includes 0, so LIF break-even is not excluded in that worst case.
+    - On the A8.1 LIF flip curve these conditions sit at m_eq ≈ 1.0–1.4 (R0/R1).
+    - LIF is more sensitive to these errors than the linear models, where the same conditions
+      give 0.21–0.45 of D_R (unrectified).
+    - LIF at the FAFB-matrix rates (about a third as many flips) was not run.
