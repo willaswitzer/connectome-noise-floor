@@ -1211,9 +1211,9 @@ computed.
     - LIF break-even rates rest on 9 perturbations; the CIs are wide and open-ended.
 - **2026-10-15, exploratory: transmitter-sign error rates from the Eckstein et al. 2024
   confusion matrices (not pre-registered; designed and run after all Arm-2 results above were
-  seen).** Prompted by N. Eckstein (pers. comm., 2026-10-14): the published accuracies are
-  empirical on annotated neurons, robust at neuron level, and depend on the transmitter; Fig. 2A
-  gives the per-transmitter confusion matrices. A8.1 and the results above are unchanged; this
+  seen).** Source: Eckstein et al. 2024, Fig. 2A, which gives per-transmitter confusion
+  matrices; the published accuracies are empirical on annotated neurons and depend on the
+  transmitter. A8.1 and the results above are unchanged; this
   entry adds conditions and does not replace any confirmatory result.
   - **Why.** The A8.1 NT anchor (6% of signed neurons, E↔I) was the 94% neuron-level *label*
     accuracy read as a *sign* error rate. Two things make the sign rate lower:
@@ -1294,3 +1294,30 @@ computed.
     - R0–R2 disagreement cannot detect transmitter errors shared across datasets. Under
       predictions-only signs, a shared misprediction raises cross-dataset agreement. Tier 0
       removes this only for types with a known transmitter.
+- **2026-10-15, correction to the entry above.** Its source sentence was reworded to cite only
+  Eckstein et al. 2024, Fig. 2A. No analysis, number or condition changed.
+- **2026-10-15, exploratory: v783 predictions against known transmitters (check on the
+  Fig. 2A rates).** `src/nt_v783_known_check.py`, output `results/arm2/linear/nt_v783_known_check.txt`.
+  Compares `top_nt` with `known_nt` (one positively named classical transmitter; histamine
+  excluded) on 68,690 v783 neurons of 1,013 known types. Fig. 2A has 135 test neurons.
+  - **Sign error, by subset.** Each row is the per-transmitter rate, then that rate weighted by
+    the tier 1–3 mix (as in the entry above):
+
+    | Subset | Neurons | Sign error | Weighted, tier 1–3 | Weighted, all signed |
+    |---|---|---|---|---|
+    | All known | 68,690 | 2.1% | 2.5% | 0.9% |
+    | All known, `top_nt_conf` ≥ 0.5 | 59,608 | 0.7% | 1.1% | 0.4% |
+    | Central (non-optic) known | 13,410 | 4.5% | 4.0% | 1.5% |
+    | Central known, conf ≥ 0.5 | 10,693 | 1.3% | 1.4% | 0.5% |
+
+  - The FAFB-matrix condition (2.9% of tier 1–3; 1.1% of signed) lies inside this range. The
+    hemibrain-matrix condition (9.3%; 3.5%) lies above all of it, so it remains a pessimistic
+    bound.
+  - Large label errors that keep the sign: ACh → DA (Kenyon cells, a known misprediction) and
+    Glu → GABA. Small classes are poor: 5-HT 75–80% label error, OA 25–45% (n = 34–79).
+  - **Clustering.** Among types with at least 2 neurons and any sign error, 21–50% have every
+    member wrong. Real errors lie between the per-neuron and per-type conditions, which bracket
+    them.
+  - **Caveat.** Known types are not a random sample (80% optic lobe; well-studied central
+    types). Tier 1–3 neurons are by definition of unknown type and may be predicted worse.
+    The central, unfiltered row (4.0% of tier 1–3) is the closest proxy.
