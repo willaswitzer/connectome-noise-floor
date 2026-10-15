@@ -1,0 +1,27 @@
+# Eckstein et al. 2024 Cell, Fig. 2A (neuron split, test set). Transcribed from the published figure 2026-10-14; every cell checked against the figure at higher zoom 2026-10-15.
+# rows = ground truth, cols = predicted; values = row proportions; n = #presynapses (synapse level) or #neurons (>30 presynapses, neuron level)
+dataset,level,true_nt,ACh,Glu,GABA,DA,5HT,OA,n
+FAFB-catmaid,synapse,ACh,0.95,0.02,0.02,0.01,0,0,29002
+FAFB-catmaid,synapse,Glu,0.01,0.74,0.05,0.06,0.13,0,1453
+FAFB-catmaid,synapse,GABA,0.03,0.03,0.93,0.01,0,0,6471
+FAFB-catmaid,synapse,DA,0.04,0.01,0.01,0.89,0.03,0.02,1903
+FAFB-catmaid,synapse,5HT,0,0,0,0.02,0.97,0.01,909
+FAFB-catmaid,synapse,OA,0.06,0,0.02,0.07,0.11,0.73,366
+FAFB-catmaid,neuron,ACh,1,0,0,0,0,0,68
+FAFB-catmaid,neuron,Glu,0,0.89,0,0,0.11,0,9
+FAFB-catmaid,neuron,GABA,0.02,0.04,0.93,0,0,0,45
+FAFB-catmaid,neuron,DA,0.09,0,0,0.82,0.09,0,11
+FAFB-catmaid,neuron,5HT,0,0,0,0,1,0,1
+FAFB-catmaid,neuron,OA,0,0,0,0,0,1,1
+hemibrain,synapse,ACh,0.83,0.02,0.13,0.01,0.01,0,32283
+hemibrain,synapse,Glu,0.11,0.55,0.31,0.01,0.02,0,9739
+hemibrain,synapse,GABA,0.02,0.05,0.91,0.02,0.01,0,8630
+hemibrain,synapse,DA,0.02,0.01,0.07,0.85,0.04,0.01,8013
+hemibrain,synapse,5HT,0.01,0,0.01,0.21,0.73,0.04,1085
+hemibrain,synapse,OA,0.03,0,0,0.1,0.02,0.85,3688
+hemibrain,neuron,ACh,0.9,0.04,0.06,0,0,0,81
+hemibrain,neuron,Glu,0.12,0.63,0.24,0.02,0,0,51
+hemibrain,neuron,GABA,0,0,1,0,0,0,28
+hemibrain,neuron,DA,0,0,0.09,0.91,0,0,45
+hemibrain,neuron,5HT,0,0,0,0,1,0,1
+hemibrain,neuron,OA,0,0,0,0,0,1,1

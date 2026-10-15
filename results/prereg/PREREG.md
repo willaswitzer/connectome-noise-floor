@@ -1209,3 +1209,88 @@ computed.
     - This is the opposite of the linear model on spurious synapses: linear crossed at m ≈ 4.5–6,
       LIF drift is 0.10–0.11 at m = 10.
     - LIF break-even rates rest on 9 perturbations; the CIs are wide and open-ended.
+- **2026-10-15, exploratory: transmitter-sign error rates from the Eckstein et al. 2024
+  confusion matrices (not pre-registered; designed and run after all Arm-2 results above were
+  seen).** Prompted by N. Eckstein (pers. comm., 2026-10-14): the published accuracies are
+  empirical on annotated neurons, robust at neuron level, and depend on the transmitter; Fig. 2A
+  gives the per-transmitter confusion matrices. A8.1 and the results above are unchanged; this
+  entry adds conditions and does not replace any confirmatory result.
+  - **Why.** The A8.1 NT anchor (6% of signed neurons, E↔I) was the 94% neuron-level *label*
+    accuracy read as a *sign* error rate. Two things make the sign rate lower:
+    - The classifier's main confusion is glutamate → GABA, which keeps the sign under A3.4.
+    - Tier-0 neurons (A3.4: type-level known transmitter) do not use the prediction. They are
+      86,811 of 138,335 signed v783 neurons (63%).
+  - **Anchor data.** `data/anchors/eckstein_fig2a.csv`: the four Fig. 2A matrices (FAFB-Catmaid
+    and hemibrain; per synapse and per neuron; neuron split, test set), transcribed from the
+    published figure and checked cell by cell. `src/sign_error_rate.py` gives label and sign
+    (cross-sign) error per transmitter.
+  - **Rates.** Weighted by the transmitter mix of v783 tier 1–3 neurons
+    (`data/anchors/composition_v783_predicted.csv`; ACh 30,714, Glu 12,244, GABA 7,642, 5-HT 712,
+    DA 180, OA 32):
+
+    | Matrix | Label error | Sign error, tier 1–3 | Sign error, all signed |
+    |---|---|---|---|
+    | FAFB, per neuron (n = 135) | 3.6% | 2.9% | 1.1% |
+    | hemibrain, per neuron (n = 207) | 14.9% | 9.3% | 3.5% |
+    | FAFB, per synapse | 10.1% | 7.8% | — |
+    | hemibrain, per synapse | 22.7% | 13.0% | — |
+
+    Under FAFB, most sign error sits on glutamate neurons (Glu → 5-HT 0.11). Under hemibrain, it
+    sits mostly on the many cholinergic neurons (ACh → Glu/GABA 0.10). The neuron-level 5-HT and
+    OA rows have n = 1, so those two rows come from the synapse level. The FAFB neuron-level ACh
+    row (n = 68) has no errors, which is optimistic.
+  - **Conditions** (`src/run_nt_realistic.py`). Only tier 1–3 neurons are eligible. Each flips
+    with the cross-sign probability of its assigned transmitter's row (the row of the predicted
+    transmitter, no Bayes inversion).
+    - Matrices: FAFB (primary; same imagery as FlyWire) and hemibrain (pessimistic).
+    - Draws: per neuron, independent; or per cell type, with one draw per `type` at the rate of
+      the type's majority transmitter, applied to every eligible member. Untyped neurons are
+      drawn individually. The per-type draw follows Eckstein et al. 2024 Fig. 4D–F and S2:
+      errors are shared within types and across datasets.
+    - 5 draws each, `default_rng(20261015 + k)`.
+    - Models, seeds, rows and drift as A8.2/A8.4 and the 2026-10-08 analysis note: unrectified
+      (NT primary) and rectified with seeds exempt.
+  - **Check.** In this environment, `flip_m1` re-run through `run_arm2_linear.py` reproduces
+    `drift.csv` to 1e-16 on every row.
+  - **Results** (`results/arm2/linear/ntcm_summary.csv`). Median drift over drawn targets, as a
+    fraction of D_R, for R0 / R1 / R2:
+
+    | Condition | Flipped (of signed) | Unrectified | Rectified, seeds exempt |
+    |---|---|---|---|
+    | FAFB, per neuron | 1.1% | 0.12 / 0.10 / 0.06 | 0.12 / 0.10 / 0.05 |
+    | FAFB, per type | 1.2% | 0.14 / 0.12 / 0.07 | 0.13 / 0.11 / 0.06 |
+    | hemibrain, per neuron | 3.5% | 0.42 / 0.34 / 0.21 | 0.31 / 0.22 / 0.11 |
+    | hemibrain, per type | 3.4% | 0.45 / 0.40 / 0.25 | 0.34 / 0.27 / 0.18 |
+
+    - Every 95% bootstrap CI of D_R − drift lies above 0. At classifier-implied rates, transmitter
+      errors stay below every rung's disagreement in both linear models.
+    - Per-type draws add up to 0.03 of drift at the same flip fraction.
+    - These flips do more per neuron than the A8.1 rule (weighted by 1 − `top_nt_conf`). On the
+      A8.1 flip curve, the FAFB conditions sit at m_eq ≤ 0.7 (below the 0.5 grid point on three
+      rows), the drift of up to about 4% flips under A8.1, from about 1.1% actual flips. The
+      hemibrain conditions sit at m_eq ≈ 1.3–2.3. Break-even expressed as "% of neurons flipped" therefore depends on which neurons flip.
+  - **Combined condition with the NT component corrected** (`src/run_combined_ntfix.py`;
+    rectified model, seed-exempt flips). The flip component is 1.1%·m of signed nodes instead of
+    6%·m. It is still drawn by the A8.1 rule. Everything else is as A8.1.
+    - Break-even m\* [95% CI]: R0 3.77 [2.88, 4.97] (3.0% synapse-level error); R1 2.97 [2.35,
+      4.02] (2.4%); R2 > 5, the top of this grid. A8.1 gave 2.50 (2.0%), 2.18 (1.7%) and 7.8.
+    - P5 statistic: drift 0.249 vs. D_R0ipsi 0.476. The difference is 0.226 (95% CI 0.195–0.260),
+      against 0.181 in A8.5.
+    - P6 statistic: drift 0.605. The difference is −0.130 (CI −0.147 to −0.092), against −0.136.
+      The P6 result does not depend on the NT anchor: unproofread segmentation alone exceeds
+      D_R0.
+  - **Not rerun: LIF.** The LIF NT break-even (R0 m\* 2.0, 12% of neurons; PN shared-state row
+    1.2, 7%) was computed under the A8.1 rule. On the linear curves, the FAFB conditions match
+    A8.1 m ≈ 0.5–0.7 and the hemibrain conditions m ≈ 1.3–2.3. If the LIF model responds to the
+    two rules the same way, FAFB-rate errors would sit below LIF break-even on both LIF rows. The
+    hemibrain-rate errors would sit near the R0 seed-specific break-even and above the PN row.
+    This is an untested mapping, not a LIF result.
+  - **Limitations.**
+    - The matrices are small (135 and 207 test neurons) and come from cell types with known
+      transmitters. Types that have never been characterized may be predicted worse.
+    - FAFB ground truth used manually placed synapses, while FlyWire predictions use automatic
+      synapses, so FAFB rates may be optimistic.
+    - Tier-0 known transmitters are treated as error-free.
+    - R0–R2 disagreement cannot detect transmitter errors shared across datasets. Under
+      predictions-only signs, a shared misprediction raises cross-dataset agreement. Tier 0
+      removes this only for types with a known transmitter.

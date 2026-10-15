@@ -1,0 +1,29 @@
+     dataset   level  true_nt     n  label_err  sign_err
+FAFB-catmaid synapse      ACh 29002      0.050     0.040
+FAFB-catmaid synapse      Glu  1453      0.253     0.202
+FAFB-catmaid synapse     GABA  6471      0.070     0.040
+FAFB-catmaid synapse       DA  1903      0.110     0.020
+FAFB-catmaid synapse      5HT   909      0.030     0.000
+FAFB-catmaid synapse       OA   366      0.263     0.020
+FAFB-catmaid synapse WEIGHTED 40104      0.101     0.078
+FAFB-catmaid  neuron      ACh    68      0.000     0.000
+FAFB-catmaid  neuron      Glu     9      0.110     0.110
+FAFB-catmaid  neuron     GABA    45      0.061     0.020
+FAFB-catmaid  neuron       DA    11      0.180     0.000
+FAFB-catmaid  neuron      5HT     1      0.000     0.000
+FAFB-catmaid  neuron       OA     1      0.000     0.000
+FAFB-catmaid  neuron WEIGHTED   135      0.036     0.029
+   hemibrain synapse      ACh 32283      0.170     0.150
+   hemibrain synapse      Glu  9739      0.450     0.140
+   hemibrain synapse     GABA  8630      0.099     0.050
+   hemibrain synapse       DA  8013      0.150     0.080
+   hemibrain synapse      5HT  1085      0.270     0.010
+   hemibrain synapse       OA  3688      0.150     0.000
+   hemibrain synapse WEIGHTED 63438      0.227     0.130
+   hemibrain  neuron      ACh    81      0.100     0.100
+   hemibrain  neuron      Glu    51      0.376     0.139
+   hemibrain  neuron     GABA    28      0.000     0.000
+   hemibrain  neuron       DA    45      0.090     0.090
+   hemibrain  neuron      5HT     1      0.000     0.000
+   hemibrain  neuron       OA     1      0.000     0.000
+   hemibrain  neuron WEIGHTED   207      0.149     0.093
