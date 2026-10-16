@@ -1354,3 +1354,26 @@ computed.
     - LIF is more sensitive to these errors than the linear models, where the same conditions
       give 0.21–0.45 of D_R (unrectified).
     - LIF at the FAFB-matrix rates (about a third as many flips) was not run.
+- **2026-10-15, exploratory: LIF at the FAFB-matrix transmitter rates.** Same setup as the
+  entry above, for `ntcm_fafb_neuron` and `ntcm_fafb_type` (about 1.1% of signed neurons
+  flipped). Three draws each, with all 43 seed sets per draw. Two more workspace restarts;
+  finished seed sets were kept. `results/arm2/lif/ntcm_summary.csv` now holds all four
+  conditions.
+  - **Results.** Median drift as a fraction of D_R, with the 95% bootstrap CI of D_R − drift:
+
+    | Condition | R0, seed-specific (9) | R0, PN shared (5) | R1, seed-specific | R1, PN shared |
+    |---|---|---|---|---|
+    | FAFB, per neuron | 0.47 [0.21, 0.55] | 0.24 [0.23, 0.24] | 0.33 [0.47, 0.66] | 0.12 [0.46, 0.48] |
+    | FAFB, per cell type | 0.64 [0.12, 0.54] | 0.51 [0.15, 0.15] | 0.34 [0.36, 0.70] | 0.28 [0.37, 0.39] |
+
+  - **Reading.**
+    - At the FAFB-matrix rates, every interval of D_R − drift lies above 0. Transmitter errors
+      at the rate the classifier implies stay below the left–right disagreement in LIF, as in
+      the linear models.
+    - The margin is smaller in LIF. They take about half (per neuron) to two thirds (per type)
+      of D_R0 on the seed-specific row, against 0.12–0.14 in the unrectified linear model.
+    - Drift grows less than proportionally with the flip rate. Tripling flips (FAFB → hemibrain)
+      raises seed-specific R0 drift from 0.47 to 0.63 (per neuron) and from 0.64 to 0.75 (per
+      type).
+    - Draw-to-draw spread is large for per-type flips: R0 drift for LC4 is 0.70, 0.11 and 0.43
+      across the three draws. A few influential types dominate.
