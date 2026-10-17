@@ -1377,3 +1377,46 @@ computed.
       type).
     - Draw-to-draw spread is large for per-type flips: R0 drift for LC4 is 0.70, 0.11 and 0.43
       across the three draws. A few influential types dominate.
+- **2026-10-16, exploratory: is the left–right noise floor inflated by transmitter-prediction
+  noise?** `src/run_sign_harmonize.py`, output
+  `results/linear/exploratory/sign_harmonized_r0*.{csv,json}`.
+  - **Method.** Each signed v783 neuron whose A3.4 sign differs from its unit's majority sign
+    (ties → +1) is set to the majority. That affects 213 of 137,752 signed graph nodes, almost
+    all tier 1. R0 and R0ipsi agreement is then recomputed exactly as `analyze_linear.py`, on
+    the drawn targets.
+  - **Results.** The base run reproduces the Arm-1 values. D changes by < 0.001 in every form:
+    - rectified R0ipsi: 0.4755 → 0.4752
+    - unrectified R0: 0.5465 → 0.5463
+    - median per-target change in ρ ≤ 0.0002; largest single-target change 0.13 (unrectified)
+  - **Reading.** Within-type sign disagreement does not inflate the left–right noise floor.
+    Errors shared by a whole type cannot inflate it either, because they hit both hemispheres
+    alike. The Limitations entry of 2026-10-15 still applies: R0 cannot detect such shared
+    errors. This check does not address segmentation differences between the hemispheres.
+- **2026-10-16, exploratory: sensitivity to the sign of glutamate.** `src/run_glu_sign.py`,
+  output `results/arm2/linear/glu_summary.csv`, `glu_drift.csv`.
+  - **Background.** A3.4 makes glutamate inhibitory. Its sign in the fly depends on the receiving
+    neuron's receptors (GluClα vs. ionotropic).
+  - **Conditions.** A fraction f ∈ {0.10, 0.25, 0.50} of glutamatergic transmission is made
+    excitatory, in two ways:
+    - Sender side: a fraction f of glutamatergic presynaptic units turn +1 onto all targets.
+    - Receiver side: a fraction f of postsynaptic units receive all their glutamatergic input
+      as excitatory (edge-level sign).
+    - 3 draws each, `default_rng(20261016 + k)`. Drift and D_R as in the 2026-10-08 analysis
+      note. Unrectified and rectified models, no seed exemption (glutamatergic seeds are NA in
+      the rectified base run).
+  - **Results.** Median drift as a fraction of D_R, for R0 / R1 / R2:
+
+    | f | Sender, unrectified | Receiver, unrectified | Sender, rectified | Receiver, rectified |
+    |---|---|---|---|---|
+    | 0.10 | 0.12 / 0.10 / 0.06 | 0.11 / 0.10 / 0.06 | 0.11 / 0.08 / 0.05 | 0.13 / 0.10 / 0.05 |
+    | 0.25 | 0.25 / 0.23 / 0.15 | 0.28 / 0.27 / 0.16 | 0.23 / 0.18 / 0.10 | 0.28 / 0.23 / 0.14 |
+    | 0.50 | 0.52 / 0.50 / 0.31 | 0.56 / 0.52 / 0.34 | 0.41 / 0.35 / 0.21 | 0.47 / 0.39 / 0.24 |
+
+  - Every 95% bootstrap CI of D_R − drift lies above 0, including f = 0.5.
+  - Drift grows roughly linearly in f. Extrapolating, break-even in the linear model would need
+    about 90% of glutamatergic transmission to be excitatory.
+  - The two ways give similar drift. Making 10% of glutamate excitatory moves predictions about
+    as much as the FAFB-matrix classifier errors.
+  - **Not run: LIF.** In LIF, classifier-style sign flips gave 4–5× the linear drift (2026-10-15
+    entries). If glutamate behaves the same way, f ≈ 0.25 could approach LIF break-even. This is
+    untested.

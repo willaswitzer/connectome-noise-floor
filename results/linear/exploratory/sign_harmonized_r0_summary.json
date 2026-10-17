@@ -1,0 +1,32 @@
+{
+ "n_harmonized": 213,
+ "n_signed": 137752,
+ "rect_R0": {
+  "n": 107,
+  "D_base": 0.475669962673714,
+  "D_harmonized": 0.4754674400554906,
+  "median_change_in_rho": 0.00016106259026094083,
+  "max_abs_change_in_rho": 0.0302073131253493
+ },
+ "rect_R0ipsi": {
+  "n": 107,
+  "D_base": 0.47552287633950485,
+  "D_harmonized": 0.4752375494571308,
+  "median_change_in_rho": 0.00017902725569224343,
+  "max_abs_change_in_rho": 0.016595790633411878
+ },
+ "norect_R0": {
+  "n": 133,
+  "D_base": 0.5465421512814583,
+  "D_harmonized": 0.5463483067582235,
+  "median_change_in_rho": 9.384872214324158e-05,
+  "max_abs_change_in_rho": 0.12536966798790483
+ },
+ "norect_R0ipsi": {
+  "n": 133,
+  "D_base": 0.5436797826945328,
+  "D_harmonized": 0.5438045745051681,
+  "median_change_in_rho": 7.362353610657069e-05,
+  "max_abs_change_in_rho": 0.12796762927260785
+ }
+}
