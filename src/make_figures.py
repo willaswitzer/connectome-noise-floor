@@ -4,9 +4,9 @@ Fig 1  Arm 1: cross-animal agreement of linear predictions per rung, vs the mism
        null; and linear vs LIF agreement on the case-study set.
 Fig 2  Arm 2: prediction drift as a fraction of the left-right disagreement, by error type and
        multiple of its anchor; linear (rectified; NT flips unrectified) and LIF (R0, seed-specific).
-Fig 3  Transmitter signs: classifier-rate errors (Fig. 2A confusion matrices) and glutamate made
+Fig 4  Transmitter signs: classifier-rate errors (Fig. 2A confusion matrices) and glutamate made
        excitatory, linear (unrectified) vs LIF, R0.
-Fig 4  Real proofreading (FlyWire v630 -> v783): drift per target vs the rung disagreement.
+Fig 3  Real proofreading (FlyWire v630 -> v783): drift per target vs the rung disagreement.
 
 Usage: python src/make_figures.py  ->  results/figures/fig{1..4}.{png,pdf}
 """
@@ -158,7 +158,7 @@ def fig2():
 
 
 # ----------------------------------------------------------------------------- Fig 3
-def fig3():
+def fig4():
     ln = pd.read_csv(R / "arm2/linear/ntcm_summary.csv")
     lg = pd.read_csv(R / "arm2/linear/glu_summary.csv")
     fn = pd.read_csv(R / "arm2/lif/ntcm_summary.csv")
@@ -205,11 +205,11 @@ def fig3():
     ax.set_title("Transmitter signs: classifier errors stay below break-even; glutamate's sign may not",
                  loc="left", x=-0.62)
     fig.tight_layout()
-    save(fig, "fig3_transmitter_signs")
+    save(fig, "fig4_transmitter_signs")
 
 
 # ----------------------------------------------------------------------------- Fig 4
-def fig4():
+def fig3():
     v = pd.read_csv(R / "arm2/linear/v630_drift.csv")
     v = v[(v.condition == "v630") & (v.model == "rect") & v.perturbation.str.startswith("t:")]
     dis = pd.read_csv(R / "arm2/linear/rung_disagreement.csv")
@@ -238,7 +238,7 @@ def fig4():
     ax.legend(loc="lower right", fontsize=8)
     ax.set_title("Real proofreading moved predictions ~2% of the noise floor")
     fig.tight_layout()
-    save(fig, "fig4_real_proofreading")
+    save(fig, "fig3_real_proofreading")
 
 
 if __name__ == "__main__":
