@@ -1455,3 +1455,7 @@ computed.
       untuned LIF is sensitive to E/I balance.
     - The linear models reach only 0.23–0.28 of D_R0 at f = 0.25. The fraction of glutamatergic
       transmission that is excitatory in the fly is unknown.
+- **2026-10-27, correction to the 2026-10-15 entry "LIF at the FAFB-matrix transmitter rates".**
+  The per-neuron R0 seed-specific value is 0.465 (`results/arm2/lif/ntcm_summary.csv`), so it
+  rounds to 0.46, not the 0.47 printed there. No other value changes. `src/preprint_numbers.py`
+  now recomputes every number quoted in the preprint from the result tables.
