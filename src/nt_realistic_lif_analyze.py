@@ -24,7 +24,8 @@ RNG = 20261015
 
 def main():
     rows = []
-    for cdir in sorted(la.RUNS.glob("ntcm_*")):
+    pattern = sys.argv[1] if len(sys.argv) > 1 else "ntcm_*"
+    for cdir in sorted(la.RUNS.glob(pattern)):
         for rdir in sorted(cdir.iterdir()):
             if rdir.is_dir() and any(rdir.glob("*.parquet")):
                 t = la.drift_for_dir(rdir)
@@ -32,7 +33,8 @@ def main():
                 t["n_runs"] = len(list(rdir.glob("*.parquet")))
                 rows.append(t)
     dr = pd.concat(rows, ignore_index=True)
-    dr.to_csv(la.OUT / "ntcm_drift_per_rep.csv", index=False)
+    tag = "ntcm" if pattern == "ntcm_*" else pattern.rstrip("_*")
+    dr.to_csv(la.OUT / f"{tag}_drift_per_rep.csv", index=False)
     d = dr.groupby(["condition", "rung", "perturbation"])["drift"].mean().reset_index()
     nrep = dr.groupby("condition")["rep"].nunique()
     rho = pd.read_csv("results/lif/primary/rho_case_study.csv").set_index(["perturbation", "rung"])["rho_10"]
@@ -61,7 +63,7 @@ def main():
                             "m_eq_lif_flip_curve": m_eq(cv, float(np.median(y))) if len(cv) else "",
                             "target": "descriptive" if rung == "R2" else "break-even"})
     res = pd.DataFrame(out)
-    res.to_csv(la.OUT / "ntcm_summary.csv", index=False)
+    res.to_csv(la.OUT / f"{tag}_summary.csv", index=False)
     with pd.option_context("display.width", 200, "display.max_columns", 20):
         print(res.round(3).to_string(index=False))
 

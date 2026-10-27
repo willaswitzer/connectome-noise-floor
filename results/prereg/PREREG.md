@@ -1420,3 +1420,38 @@ computed.
   - **Not run: LIF.** In LIF, classifier-style sign flips gave 4–5× the linear drift (2026-10-15
     entries). If glutamate behaves the same way, f ≈ 0.25 could approach LIF break-even. This is
     untested.
+- **2026-10-17, exploratory: glutamate's sign in LIF.** Three conditions of the 2026-10-16
+  glutamate entry were run in the A8.3 LIF setup: `glu_post_f25`, `glu_post_f10` and
+  `glu_pre_f25`.
+  - **Setup.** The draws are identical to the linear runs (`run_glu_sign.draw`, checked against
+    the linear `meta.json` counts). Everything else is as the 2026-10-15 LIF entries: 43 seed
+    sets, 10 trials, 3 draws, drift against the first 10 trials of the Amendment-7 runs,
+    D_R = 1 − rho_10. There is no seed exemption.
+  - **Code.** `src/run_arm2_lif.py --glu <conditions>` and `src/nt_realistic_lif_analyze.py "glu_*"`.
+    Outputs: `results/arm2/lif/glu_summary.csv`, `glu_drift_per_rep.csv`, `glu_activity.csv`.
+  - **Results.** Median drift as a fraction of D_R, with the 95% bootstrap CI of D_R − drift:
+
+    | Condition | R0, seed-specific (9) | R0, PN shared (5) | R1, seed-specific | R1, PN shared |
+    |---|---|---|---|---|
+    | Receiver side, f = 0.10 | 0.54 [0.12, 0.47] | 0.46 [0.16, 0.17] | 0.35 [0.37, 0.59] | 0.24 [0.40, 0.42] |
+    | Receiver side, f = 0.25 | 1.40 [−0.25, 0.39] | 1.37 [−0.12, −0.11] | 0.93 [0.02, 0.54] | 0.74 [0.13, 0.15] |
+    | Sender side, f = 0.25 | 1.00 [−0.07, 0.33] | 0.86 [0.04, 0.05] | 0.68 [0.18, 0.45] | 0.47 [0.27, 0.29] |
+
+  - **Activity versus the unperturbed runs.** Median ratio of active neurons:
+    - receiver side, f = 0.10: 1.10 (75th percentile 1.23; max 9)
+    - receiver side, f = 0.25: 1.60 (4.5; 44)
+    - sender side, f = 0.25: 1.63 (2.6; 29)
+
+    Median spike ratio: 1.10, 1.59 and 1.33.
+  - **Reading.**
+    - In LIF, the sign of glutamate is the first uncertainty in this project to reach the
+      left–right disagreement at a plausible setting.
+    - At f = 0.25, median drift reaches D_R0 (sender side) or exceeds it (receiver side, 1.4×).
+      The PN shared-state row exceeds it with an interval below 0.
+    - At f = 0.10 drift is about half of D_R0, comparable to the FAFB-matrix classifier errors
+      (0.47–0.64).
+    - The effect comes with a shift to a more active regime (about 1.6× active neurons at
+      f = 0.25, much more in some runs). The model's weights were not retuned (A1.4), and
+      untuned LIF is sensitive to E/I balance.
+    - The linear models reach only 0.23–0.28 of D_R0 at f = 0.25. The fraction of glutamatergic
+      transmission that is excitatory in the fly is unknown.

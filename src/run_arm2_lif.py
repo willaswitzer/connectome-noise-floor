@@ -41,6 +41,8 @@ ap.add_argument("--_worker", nargs=4, default=None, help=argparse.SUPPRESS)
 ap.add_argument("--_write", nargs=2, default=None, help=argparse.SUPPRESS)
 ap.add_argument("--ntcm", default="", help="exploratory 2026-10-15: comma list of run_nt_realistic.py "
                 "conditions to run instead of the A8.3 grid (k = 0-2)")
+ap.add_argument("--glu", default="", help="exploratory 2026-10-16: comma list of run_glu_sign.py "
+                "conditions (k = 0-2, condition-major; no seed exemption)")
 ap.add_argument("--rungs", default="", help="only runs serving these rungs, e.g. R0,R1 (default: all)")
 args = ap.parse_args()
 
@@ -100,6 +102,8 @@ import inject_errors as ie
 
 
 def graph_list():
+    if args.glu:
+        return [(c, f"k{k}", ("glu", c, k)) for c in args.glu.split(",") for k in range(3)]
     if args.ntcm:
         return [(c, f"k{k}", ("ntcm", c, k)) for k in range(3) for c in args.ntcm.split(",")]
     out = [("base", f"r{i}", None) for i in range(3)]
@@ -122,6 +126,27 @@ def write_graph(gdir, spec, base):
             if not (gdir / f).exists():
                 shutil.copy(L / f, gdir / f)
         ids = pd.read_csv(gdir / "completeness.csv", index_col=0).index.to_numpy()
+        return ids, np.zeros(0, np.int64), np.zeros(0, np.int64)
+    if spec[0] == "glu":   # exploratory 2026-10-16: glutamate sign (run_glu_sign.py draws)
+        import run_glu_sign as gs
+        _, cond, k = spec
+        glu, grp = gs.node_tables(base)
+        sign, post_sel, info = gs.draw(base, cond, k, glu, grp)
+        pre, post, w = base.pre, base.post, base.w
+        esign = sign[pre].astype(int)
+        if post_sel is not None:
+            m = glu[pre] & post_sel[post]
+            esign[m] *= -1
+            info["n_edges_flipped"] = int(m.sum())
+        ids = base.ids
+        con = pd.DataFrame({"Presynaptic_ID": ids[pre], "Postsynaptic_ID": ids[post],
+                            "Presynaptic_Index": pre, "Postsynaptic_Index": post,
+                            "Connectivity": w.astype(np.int64)})
+        con["Excitatory"] = esign
+        con["Excitatory x Connectivity"] = con["Excitatory"] * con["Connectivity"]
+        con.to_parquet(gdir / "connectivity.parquet")
+        pd.DataFrame({"Completed": True}, index=pd.Index(ids, name=None)).to_csv(gdir / "completeness.csv")
+        (gdir / "graph.json").write_text(json.dumps({"glu": cond, "k": k, **info}, indent=1))
         return ids, np.zeros(0, np.int64), np.zeros(0, np.int64)
     if spec[0] == "ntcm":   # exploratory 2026-10-15: confusion-matrix flips (run_nt_realistic.py)
         import run_nt_realistic as ntr
@@ -154,7 +179,8 @@ def write_in_subprocess(cond, rep, gdir):
     """Write the injected graph in a child process, so the driver never holds the ~1.5 GB base
     graph while the two LIF workers run."""
     subprocess.run([sys.executable, __file__, "--_write", cond, rep]
-                   + (["--ntcm", args.ntcm] if args.ntcm else []), check=True)
+                   + (["--ntcm", args.ntcm] if args.ntcm else [])
+                   + (["--glu", args.glu] if args.glu else []), check=True)
     z = np.load(gdir / "flips.npz")
     ids = pd.read_csv(gdir / "completeness.csv", index_col=0).index.to_numpy()
     return ids, z["flipped"], z["frag_parent"]

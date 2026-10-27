@@ -43,28 +43,38 @@ def node_tables(base):
     return glu, grp
 
 
-def operator(base, cond, k, glu, grp):
+def draw(base, cond, k, glu, grp):
+    """The draw for (cond, k): (node signs after sender-side changes, receiver mask or None, info).
+    Shared by the linear runner and the LIF runner (run_arm2_lif.py --glu), so both use the same draws."""
     side, f = cond.split("_")[1], int(cond.split("_f")[1]) / 100
     rng = np.random.default_rng(SEED + k).spawn(len(CONDS))[CONDS.index(cond)]
     sign = base.sign.copy()
+    post_sel = None
     if side == "pre":
         g = np.unique(grp[glu])
         chosen = g[rng.random(len(g)) < f]
         flip = glu & np.isin(grp, chosen)
         sign[flip] = 1
         info = {"n_glu_neurons_excitatory": int(flip.sum())}
-    parts = [tuple(x.astype(np.int32) for x in (base.pre, base.post, base.w))]
-    pert = ie.Perturbed(parts, sign, base.n, np.zeros(0, np.int64), np.zeros(0, np.int64), {}, [], k)
-    A = ie.linear_operator(pert, consume=True)
-    if side == "post":
+    else:
         g = np.unique(grp)
         chosen = g[rng.random(len(g)) < f]
         post_sel = np.isin(grp, chosen)
+        info = {"n_post_nodes_glu_excitatory": int(post_sel.sum())}
+    info["n_glu_neurons"] = int(glu.sum())
+    return sign, post_sel, info
+
+
+def operator(base, cond, k, glu, grp):
+    sign, post_sel, info = draw(base, cond, k, glu, grp)
+    parts = [tuple(x.astype(np.int32) for x in (base.pre, base.post, base.w))]
+    pert = ie.Perturbed(parts, sign, base.n, np.zeros(0, np.int64), np.zeros(0, np.int64), {}, [], k)
+    A = ie.linear_operator(pert, consume=True)
+    if post_sel is not None:
         rows = np.repeat(np.arange(A.shape[0]), np.diff(A.indptr))
         m = post_sel[rows] & glu[A.indices]
         A.data[m] *= -1
-        info = {"n_post_nodes_glu_excitatory": int(post_sel.sum()), "n_edges_flipped": int(m.sum())}
-    info["n_glu_neurons"] = int(glu.sum())
+        info["n_edges_flipped"] = int(m.sum())
     return A, info
 
 

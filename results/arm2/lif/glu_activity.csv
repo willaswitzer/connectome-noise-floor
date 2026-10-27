@@ -1,0 +1,4 @@
+cond,act_med,act_q75,act_max,spk_med
+glu_post_f10,1.097,1.229,9.021,1.099
+glu_post_f25,1.601,4.485,44.191,1.587
+glu_pre_f25,1.635,2.579,28.929,1.329
