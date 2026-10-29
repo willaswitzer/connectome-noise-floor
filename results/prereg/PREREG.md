@@ -1459,3 +1459,61 @@ computed.
   The per-neuron R0 seed-specific value is 0.465 (`results/arm2/lif/ntcm_summary.csv`), so it
   rounds to 0.46, not the 0.47 printed there. No other value changes. `src/preprint_numbers.py`
   now recomputes every number quoted in the preprint from the result tables.
+- **2026-10-27, exploratory: two checks on the glutamate result (not pre-registered; run after
+  the 2026-10-17 entry was seen).**
+  - **(a) The noise floor inside the glutamate networks.** Glutamate's sign is the same unknown
+    in every fly, so a glutamate change applies to both hemispheres. `src/glu_noise_floor.py`
+    recomputes D_R0 inside each modified network, from the left- and right-stimulation runs it
+    already has, and compares drift with that D as well as with the original D_R0.
+    - **Check.** On the Amendment-7 runs the code reproduces rho_10 to 6e-17. On the linear base
+      run it reproduces the Arm-1 D to ≤ 6e-4.
+    - **LIF, R0 seed-specific** (drift / original D, then drift / D inside the glutamate network):
+      - receiver side, f = 0.10: 0.54 → 0.58
+      - receiver side, f = 0.25: 1.40 → 1.35
+      - sender side, f = 0.25: 1.00 → 1.10
+
+      D_R0 itself changes little (0.54 → 0.49–0.56), so the crossing at f = 0.25 does not depend
+      on which noise floor is used.
+    - **Linear, unrectified.** D_R0 barely changes (0.55 → 0.50–0.52 at f = 0.5).
+    - **Linear, rectified.** D_R0 shrinks as f grows (0.48 → 0.30 at f = 0.5), because more
+      excitation leaves fewer units at the rectifier floor. Drift / D inside the network is then
+      0.64–0.73 at f = 0.5, versus 0.41–0.47 against the original D. Every CI of D − drift still
+      lies above 0.
+    - Outputs: `results/arm2/lif/glu_noise_floor.csv`, `results/arm2/linear/glu_noise_floor.csv`.
+  - **(b) Activity-matched LIF control.** At f = 0.25 the LIF network becomes about 1.6× more
+    active (2026-10-17). This check asks whether the drift comes from glutamate's sign or only
+    from the higher activity.
+    - **Deviation from A1.4.** A1.4 fixes the Shiu weights; this control scales W_syn for network
+      synapses only, keeping the stimulus at 68.75 mV (`ARM2_WSYN_SCALE` in
+      `src/run_arm2_lif.py`).
+    - **Calibration.** Draw k0 of receiver side f = 0.25, 3 trials, at scales 0.85 and 0.75.
+      Scale 0.85 matched activity (spike ratio 0.98, active-neuron ratio 0.96); 0.75 fell below.
+      Scale 0.85 was fixed before any drift was computed.
+    - **Runs.**
+      - Scale-only control: the unperturbed graph at scale 0.85 (`ARM2_SCALEONLY=1`), 28 R0 runs.
+      - The 3 receiver-side f = 0.25 draws at scale 0.85, 28 R0 runs each.
+      - 10 trials. Drift is against the unscaled Amendment-7 reference, so it includes the effect
+        of the rescaling.
+    - **Activity** (`src/glu_activity.py`, median ratio to the reference): scale-only 0.79 spikes
+      and 0.79 active neurons. Activity-matched glutamate: 1.02 and 1.11 (max 3.4 and 4.5, against
+      24 and 44 unscaled).
+    - **Results, R0** (median drift / D_R0, with the 95% bootstrap CI of D_R − drift):
+
+      | Condition | Seed-specific (9) | PN shared (5) |
+      |---|---|---|
+      | Scale only, 0.85 | 0.16 [0.12, 0.64] | 0.16 [0.26, 0.26] |
+      | Receiver side, f = 0.25, unscaled (2026-10-17) | 1.40 [−0.25, 0.39] | 1.37 [−0.12, −0.11] |
+      | Receiver side, f = 0.25, activity-matched | 1.15 [−0.25, 0.31] | 1.17 [−0.06, −0.05] |
+
+    - Outputs: `results/arm2/lif/glu_post_f25_ws_summary.csv`, `glu_post_f25_ws_drift_per_rep.csv`,
+      `scaleonly_summary.csv`, `scaleonly_drift_per_rep.csv`, `glu_activity_matched.csv`.
+  - **Reading.**
+    - Matching activity lowers the drift only from 1.40 to 1.15 of D_R0, and the rescaling alone
+      gives 0.16. Most of the LIF effect therefore comes from where glutamate's sign changes, not
+      from the network being more active.
+    - Recomputing the noise floor inside the modified networks does not remove the crossing
+      either.
+    - The 2026-10-17 conclusion stands: in LIF, the sign of glutamate at f = 0.25 moves
+      predictions about as much as the left–right differences between hemispheres.
+    - This rests on 9 seed-specific perturbations and 3 draws. Per-perturbation drift varies
+      across draws by up to 0.56 (e.g., LC10a 0.93, 0.37, 0.55).

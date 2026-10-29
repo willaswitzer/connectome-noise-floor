@@ -30,6 +30,10 @@ L = ROOT / "data/derived/lif/flywire"
 OUT = ROOT / "data/derived/arm2/lif"
 SCR = ROOT / "data/derived/arm2/lif_graphs"
 WSYN, RATE = 0.275, 150.0
+# exploratory 2026-10-27 (activity-matched control): scale W_syn for network synapses only; the
+# stimulus weight w_syn * f_poi stays 68.75 mV. Set through the environment so workers inherit it.
+import os
+WSYN_SCALE = float(os.environ.get("ARM2_WSYN_SCALE", "1"))
 FRAG_ID0 = 2 ** 62
 N_BASE = 138639   # v783 scoped-graph nodes (Amendment 7)
 
@@ -90,7 +94,8 @@ if args._worker is not None:
 
     seeds = json.loads((L / "seeds.json").read_text())["runs"][key]
     params = dict(shiu.default_params)
-    params.update({"r_poi": RATE * Hz, "n_run": 1, "w_syn": WSYN * mV, "f_poi": 250 * 0.275 / WSYN})
+    params.update({"r_poi": RATE * Hz, "n_run": 1, "w_syn": WSYN * WSYN_SCALE * mV,
+                   "f_poi": 250 * 0.275 / (WSYN * WSYN_SCALE)})
     shiu.run_exp(exp_name=f"_tmp_{key}_{tid}", neu_exc=seeds, path_res=str(gdir / "tmp"),
                  path_comp=str(gdir / "completeness.csv"), path_con=str(gdir / "connectivity.parquet"),
                  params=params, n_proc=1, force_overwrite=True)
@@ -102,8 +107,12 @@ import inject_errors as ie
 
 
 def graph_list():
+    if os.environ.get("ARM2_SCALEONLY"):   # exploratory 2026-10-27: unperturbed graph at the scaled W_syn
+        return [(f"scaleonly_ws{WSYN_SCALE:g}", "r0", None)]
     if args.glu:
-        return [(c, f"k{k}", ("glu", c, k)) for c in args.glu.split(",") for k in range(3)]
+        sfx = "" if WSYN_SCALE == 1 else f"_ws{WSYN_SCALE:g}"
+        ks = [int(k) for k in os.environ.get("ARM2_KS", "0,1,2").split(",")]
+        return [(c + sfx, f"k{k}", ("glu", c, k)) for c in args.glu.split(",") for k in ks]
     if args.ntcm:
         return [(c, f"k{k}", ("ntcm", c, k)) for k in range(3) for c in args.ntcm.split(",")]
     out = [("base", f"r{i}", None) for i in range(3)]
@@ -260,7 +269,7 @@ def main():
                 tmp.unlink()
             res = pd.concat(parts, ignore_index=True).rename(columns={"flywire_id": "node_id"})
             res.to_parquet(od / f"{key}.parquet")
-            meta = {"condition": cond, "rep": rep, "run": key, "trials": args.trials, "wsyn_mV": WSYN,
+            meta = {"condition": cond, "rep": rep, "run": key, "trials": args.trials, "wsyn_mV": WSYN * WSYN_SCALE,
                     "rate_hz": RATE, "jobs": jobs, "retried": len(failed), "n_seed_neurons": len(seeds[key]), "n_seed_exempt": n_fix,
                     "n_active_neurons": int(res["node_id"].nunique()),
                     "elapsed_s": round(time.time() - t0, 1), "date": time.strftime("%Y-%m-%d %H:%M")}
