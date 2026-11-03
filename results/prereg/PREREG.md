@@ -1517,3 +1517,52 @@ computed.
       predictions about as much as the left–right differences between hemispheres.
     - This rests on 9 seed-specific perturbations and 3 draws. Per-perturbation drift varies
       across draws by up to 0.56 (e.g., LC10a 0.93, 0.37, 0.55).
+- **2026-10-30, exploratory: where glutamate's sign reaches the LIF noise floor, and more draws
+  for cell-type-clustered transmitter errors (not pre-registered; run after the entries above were
+  seen).**
+  - **(a) Glutamate crossing.** Two receiver-side conditions, `glu_post_f15` and `glu_post_f20`,
+    were added to `src/run_glu_sign.py`.
+    - They are appended to `CONDS`, so the spawn index and every draw of the six earlier
+      conditions are unchanged. Re-drawing `glu_post_f25` k0 and `glu_pre_f10` k0 reproduced the
+      saved `meta.json` counts exactly.
+    - Setup as the 2026-10-17 entry: 43 seed sets, 10 trials, 3 draws, no seed exemption. Linear
+      runs as the 2026-10-16 entry.
+    - **Median drift / D_R0, LIF, R0** (seed-specific; PN shared):
+      - f = 0.15: 0.81 (CI of D − drift [0.04, 0.30]); 0.74 [0.08, 0.08]
+      - f = 0.20: 1.05 [−0.15, 0.23]; 1.14 [−0.04, −0.04]
+    - **Linear, unrectified:** 0.18 and 0.23 at f = 0.15 and 0.20. Rectified: 0.19 and 0.23.
+    - **f is a fraction of receiving units, and units differ widely in size.** The share of
+      glutamatergic connections made excitatory therefore varies between draws: 11–18% at
+      f = 0.15, 17–20% at f = 0.20.
+    - `src/glu_crossing.py` regresses each draw's drift / D_R0 on that share. The share is
+      `n_edges_flipped` / 3,052,970 glutamatergic connections, over the 12 receiver-side LIF draws
+      (f = 0.10–0.25). A 2,000-resample bootstrap over draws gives the interval.
+    - **Result.** The fitted line reaches D_R0 at 20.2% of glutamatergic connections (95% interval
+      17.4–23.2%; r = 0.88) for the seed-specific row, and at 19.6% (16.4–26.5%; r = 0.78) for
+      the PN row. On R1, drift stays below D_R1 at every f tested (0.74 at f = 0.20).
+  - **(b) Per-type transmitter flips, draws k = 3–5.** `ntcm_fafb_type` and `ntcm_hemi_type` got
+    draws k = 3–5, through `ARM2_KS` in `src/run_arm2_lif.py`; the seed is
+    `default_rng(20261015 + k)` as before.
+    - Analysis: `src/nt_realistic_lif_analyze.py "ntcm_*_type" ntcm_type6` (new optional
+      output-tag argument). `ntcm_summary.csv` is left as written.
+    - **R0 seed-specific, drift / D_R0** (3 → 6 draws):
+      - FAFB matrix: 0.64 → 0.51 (CI of D − drift [0.19, 0.50])
+      - Hemibrain matrix: 0.75 → 0.85 ([−0.07, 0.38])
+    - **PN row:** 0.51 and 0.90, both CIs above 0.
+    - The hemibrain per-type interval still includes 0 and did not narrow. Its width comes from
+      the 9 perturbations, not from draw-to-draw variance. Per-draw medians are 0.25–0.34.
+  - **Bookkeeping.**
+    - Re-running `run_glu_sign.py --analyze` with the two new conditions left every earlier point
+      estimate in `glu_summary.csv` unchanged.
+    - The rectified rows' bootstrap CIs moved by ≤ 0.005, because the shared bootstrap generator
+      now passes through the new unrectified rows first. No conclusion changes.
+    - Fig. 4 and `src/preprint_numbers.py` now use the 6-draw per-type values and the new
+      glutamate rows.
+  - **Reading.**
+    - In the spiking model, glutamate's sign reaches the left–right noise floor once about a fifth
+      of glutamatergic connections are excitatory (17–23%). The linear models reach about a quarter
+      of the noise floor at the same setting.
+    - Stated as an accuracy target: spiking emulations need glutamate's sign right for at least
+      about 80% of glutamatergic connections.
+    - At the FAFB-matrix rate, per-type classifier errors use about half of the noise floor, the
+      same as per-neuron errors (0.46).

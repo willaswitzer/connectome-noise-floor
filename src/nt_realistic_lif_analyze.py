@@ -33,7 +33,7 @@ def main():
                 t["n_runs"] = len(list(rdir.glob("*.parquet")))
                 rows.append(t)
     dr = pd.concat(rows, ignore_index=True)
-    tag = "ntcm" if pattern == "ntcm_*" else pattern.rstrip("_*")
+    tag = sys.argv[2] if len(sys.argv) > 2 else ("ntcm" if pattern == "ntcm_*" else pattern.rstrip("_*"))
     dr.to_csv(la.OUT / f"{tag}_drift_per_rep.csv", index=False)
     d = dr.groupby(["condition", "rung", "perturbation"])["drift"].mean().reset_index()
     nrep = dr.groupby("condition")["rep"].nunique()

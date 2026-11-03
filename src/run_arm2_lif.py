@@ -114,7 +114,8 @@ def graph_list():
         ks = [int(k) for k in os.environ.get("ARM2_KS", "0,1,2").split(",")]
         return [(c + sfx, f"k{k}", ("glu", c, k)) for c in args.glu.split(",") for k in ks]
     if args.ntcm:
-        return [(c, f"k{k}", ("ntcm", c, k)) for k in range(3) for c in args.ntcm.split(",")]
+        ks = [int(k) for k in os.environ.get("ARM2_KS", "0,1,2").split(",")]   # 2026-10-30: extra draws
+        return [(c, f"k{k}", ("ntcm", c, k)) for k in ks for c in args.ntcm.split(",")]
     out = [("base", f"r{i}", None) for i in range(3)]
     for m in (1, 3, 10):
         for t in ie.TYPES:

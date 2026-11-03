@@ -26,6 +26,7 @@ def numbers():
     bec = lambda rung: float(be[(be.family == "combined") & (be.model == "rect") & (be.rung == rung)].m_star.iloc[0])
     v = pd.read_csv(R / "arm2/linear/v630_drift.csv")
     v = v[(v.condition == "v630") & (v.model == "rect") & v.perturbation.str.startswith("t:")]
+    gx = pd.read_csv(R / "arm2/lif/glu_crossing.csv").query("row == 'seed_specific'")
     vm = lambda rung: float(v[v.rung == rung].drift.median())
     rows = [
         # (section, quantity, recomputed, value in the preprint, decimals)
@@ -45,13 +46,18 @@ def numbers():
         ("4.3", "Real-proofreading drift, R2", vm("R2"), 0.002, 3),
         ("4.4", "Linear, FAFB-matrix flips per neuron / D_R0", lin_summary("arm2/linear/ntcm_summary.csv", "ntcm_fafb_neuron", "norect"), 0.12, 2),
         ("4.4", "LIF, FAFB-matrix flips per neuron / D_R0", lif_summary("arm2/lif/ntcm_summary.csv", "ntcm_fafb_neuron"), 0.46, 2),
-        ("4.4", "LIF, FAFB-matrix flips per cell type / D_R0", lif_summary("arm2/lif/ntcm_summary.csv", "ntcm_fafb_type"), 0.64, 2),
+        ("4.4", "LIF, FAFB-matrix flips per cell type / D_R0", lif_summary("arm2/lif/ntcm_type6_summary.csv", "ntcm_fafb_type"), 0.51, 2),
         ("4.4", "LIF, hemibrain-matrix flips per neuron / D_R0", lif_summary("arm2/lif/ntcm_summary.csv", "ntcm_hemi_neuron"), 0.63, 2),
-        ("4.4", "LIF, hemibrain-matrix flips per cell type / D_R0", lif_summary("arm2/lif/ntcm_summary.csv", "ntcm_hemi_type"), 0.75, 2),
+        ("4.4", "LIF, hemibrain-matrix flips per cell type / D_R0", lif_summary("arm2/lif/ntcm_type6_summary.csv", "ntcm_hemi_type"), 0.85, 2),
         ("4.4", "Linear, 50% glutamate excitatory (receiver) / D_R0", lin_summary("arm2/linear/glu_summary.csv", "glu_post_f50", "norect"), 0.56, 2),
         ("4.4", "LIF, 10% glutamate excitatory (receiver) / D_R0", lif_summary("arm2/lif/glu_summary.csv", "glu_post_f10"), 0.54, 2),
         ("4.4", "LIF, 25% glutamate excitatory (sender) / D_R0", lif_summary("arm2/lif/glu_summary.csv", "glu_pre_f25"), 1.00, 2),
         ("4.4", "LIF, 25% glutamate excitatory (receiver) / D_R0", lif_summary("arm2/lif/glu_summary.csv", "glu_post_f25"), 1.40, 2),
+        ("4.4", "LIF, 15% glutamate excitatory (receiver) / D_R0", lif_summary("arm2/lif/glu_post_f15_summary.csv", "glu_post_f15"), 0.81, 2),
+        ("4.4", "LIF, 20% glutamate excitatory (receiver) / D_R0", lif_summary("arm2/lif/glu_post_f20_summary.csv", "glu_post_f20"), 1.05, 2),
+        ("4.4", "LIF glutamate crossing, share of glutamatergic connections", gx.crossing_glu_edge_frac.iloc[0], 0.20, 2),
+        ("4.4", "  95% interval, low", gx.ci_lo.iloc[0], 0.17, 2),
+        ("4.4", "  95% interval, high", gx.ci_hi.iloc[0], 0.23, 2),
     ]
     t = pd.DataFrame(rows, columns=["section", "quantity", "recomputed", "in_text", "decimals"])
     t["matches"] = [round(r, d) == round(x, d) for r, x, d in zip(t.recomputed, t.in_text, t.decimals)]

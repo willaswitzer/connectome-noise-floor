@@ -162,24 +162,24 @@ def fig4():
     ln = pd.read_csv(R / "arm2/linear/ntcm_summary.csv")
     lg = pd.read_csv(R / "arm2/linear/glu_summary.csv")
     fn = pd.read_csv(R / "arm2/lif/ntcm_summary.csv")
-    fg = pd.read_csv(R / "arm2/lif/glu_summary.csv")
+    fn6 = pd.read_csv(R / "arm2/lif/ntcm_type6_summary.csv")   # per-type conditions, 6 draws (2026-10-30)
+    fg = pd.concat([pd.read_csv(R / f"arm2/lif/{f}.csv") for f in
+                    ("glu_summary", "glu_post_f15_summary", "glu_post_f20_summary")])
     lin = lambda d, c: float(d[(d.condition == c) & (d.model == "norect") & (d.rung == "R0")].drift_over_D.iloc[0])
     lif = lambda d, c: float(d[(d.condition == c) & (d.rung == "R0") & (d.row == "seed_specific")].drift_over_D.iloc[0])
     rows = [
         ("Classifier errors", "FAFB matrix, per neuron (1.1%)", lin(ln, "ntcm_fafb_neuron"), lif(fn, "ntcm_fafb_neuron")),
-        ("Classifier errors", "FAFB matrix, per cell type (1.2%)", lin(ln, "ntcm_fafb_type"), lif(fn, "ntcm_fafb_type")),
+        ("Classifier errors", "FAFB matrix, per cell type (1.2%)", lin(ln, "ntcm_fafb_type"), lif(fn6, "ntcm_fafb_type")),
         ("Classifier errors", "Hemibrain matrix, per neuron (3.5%)", lin(ln, "ntcm_hemi_neuron"), lif(fn, "ntcm_hemi_neuron")),
-        ("Classifier errors", "Hemibrain matrix, per cell type (3.4%)", lin(ln, "ntcm_hemi_type"), lif(fn, "ntcm_hemi_type")),
-        ("Glutamate excitatory", "10%, by receiving cell type", lin(lg, "glu_post_f10"), lif(fg, "glu_post_f10")),
-        ("Glutamate excitatory", "25%, by sending cell type", lin(lg, "glu_pre_f25"), lif(fg, "glu_pre_f25")),
-        ("Glutamate excitatory", "25%, by receiving cell type", lin(lg, "glu_post_f25"), lif(fg, "glu_post_f25")),
+        ("Classifier errors", "Hemibrain matrix, per cell type (3.4%)", lin(ln, "ntcm_hemi_type"), lif(fn6, "ntcm_hemi_type")),
+        ("Glutamate excitatory", "10% of receiving cell types", lin(lg, "glu_post_f10"), lif(fg, "glu_post_f10")),
+        ("Glutamate excitatory", "15% of receiving cell types", lin(lg, "glu_post_f15"), lif(fg, "glu_post_f15")),
+        ("Glutamate excitatory", "20% of receiving cell types", lin(lg, "glu_post_f20"), lif(fg, "glu_post_f20")),
+        ("Glutamate excitatory", "25% of receiving cell types", lin(lg, "glu_post_f25"), lif(fg, "glu_post_f25")),
+        ("Glutamate excitatory", "25% of sending cell types", lin(lg, "glu_pre_f25"), lif(fg, "glu_pre_f25")),
     ]
-    fig, ax = plt.subplots(figsize=(8.6, 4.6))
-    y = np.arange(len(rows))[::-1].astype(float)
-    y[4:] = y[4:] - 0.0
-    gap = np.array([0, 0, 0, 0, 0.6, 0.6, 0.6])
-    y = np.arange(len(rows))[::-1] + gap[::-1] * 0
-    y = np.array([7.6, 6.6, 5.6, 4.6, 2.6, 1.6, 0.6])
+    fig, ax = plt.subplots(figsize=(8.6, 5.6))
+    y = np.array([10.6, 9.6, 8.6, 7.6, 5.6, 4.6, 3.6, 2.6, 1.6])
     h = 0.34
     for yy, (_, lab, vl, vf) in zip(y, rows):
         ax.barh(yy + h / 2 + 0.02, vl, height=h, color=LINEAR, lw=0)
@@ -187,20 +187,20 @@ def fig4():
         ax.text(vl + 0.02, yy + h / 2 + 0.02, f"{vl:.2f}", va="center", fontsize=7.5, color=INK2)
         ax.text(vf + 0.02, yy - h / 2 - 0.02, f"{vf:.2f}", va="center", fontsize=7.5, color=INK)
     ax.set_yticks(y, [r[1] for r in rows])
-    ax.text(-0.01, 8.35, "Transmitter classifier errors (share of signed neurons flipped)", transform=ax.get_yaxis_transform(),
+    ax.text(-0.01, 11.35, "Transmitter classifier errors (share of signed neurons flipped)", transform=ax.get_yaxis_transform(),
             ha="right", fontsize=8.5, fontweight="bold", color=INK)
-    ax.text(-0.01, 3.35, "Glutamate made excitatory", transform=ax.get_yaxis_transform(), ha="right",
+    ax.text(-0.01, 6.35, "Glutamate made excitatory", transform=ax.get_yaxis_transform(), ha="right",
             fontsize=8.5, fontweight="bold", color=INK)
     ax.axvline(1, color=INK, lw=1, ls=(0, (4, 3)))
-    ax.text(1.01, 8.3, "break-even", fontsize=8, color=INK2, va="center")
+    ax.text(1.01, 11.3, "break-even", fontsize=8, color=INK2, va="center")
     ax.set_xlim(0, 1.62)
-    ax.set_ylim(0.1, 8.7)
+    ax.set_ylim(1.1, 11.7)
     ax.set_xlabel("Prediction drift / left–right disagreement (R0)")
     ax.grid(axis="y", visible=False)
     from matplotlib.patches import Patch
     ax.legend(handles=[Patch(color=LINEAR, label="Linear (unrectified)"),
                        Patch(color=LIF, label="Spiking (LIF), 9 case studies")],
-              loc="center right", fontsize=8, bbox_to_anchor=(1.0, 0.385), frameon=True,
+              loc="upper right", fontsize=8, bbox_to_anchor=(1.0, 0.93), frameon=True,
               facecolor=SURFACE, edgecolor=SURFACE, framealpha=1)
     ax.set_title("Transmitter signs: classifier errors stay below break-even; glutamate's sign may not",
                  loc="left", x=-0.62)

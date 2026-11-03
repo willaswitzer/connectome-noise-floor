@@ -29,6 +29,9 @@ from run_arm2_linear import readout_setup, pad, OUT, ALPHA, K, BATCH
 
 FS = [0.10, 0.25, 0.50]
 CONDS = [f"glu_{side}_f{int(f * 100)}" for side in ("pre", "post") for f in FS]
+# exploratory 2026-10-30: receiver-side f = 0.15, 0.20 to locate the LIF crossing. Appended, so the
+# spawn index (and every draw) of the six conditions above is unchanged.
+CONDS += ["glu_post_f15", "glu_post_f20"]
 SEED = 20261016
 MODELS = ["norect", "rect"]
 
