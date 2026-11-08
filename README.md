@@ -1,4 +1,4 @@
-# Connectome noise ceiling
+# Connectome noise floor
 
 > **Status:** preprint in preparation (target late Nov 2026). Results are complete. Numbers may
 > change slightly before submission. Confirmatory analyses follow the pre-registration; anything
@@ -29,8 +29,8 @@ binding spec, with dated, append-only amendments. Anything not in H1–H4 is lab
 Needs Python 3.11+ and the committed result tables only (no connectome downloads, a few seconds).
 
 ```bash
-git clone https://github.com/willaswitzer/connectome-noise-ceiling.git
-cd connectome-noise-ceiling
+git clone https://github.com/willaswitzer/connectome-noise-floor.git
+cd connectome-noise-floor
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-repro.txt
 
