@@ -1,5 +1,9 @@
 # Connectome noise ceiling
 
+> **Status:** preprint in preparation (target late Nov 2026). Results are complete. Numbers may
+> change slightly before submission. Confirmatory analyses follow the pre-registration; anything
+> outside H1–H4 is exploratory.
+
 **Do connectome reconstruction errors matter more or less for brain emulation than natural
 differences between individual brains?**
 
