@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 Drosophila_brain_model/
 .env
+
+# Internal drafts of PREREG entries (already merged into PREREG.md)
+results/prereg/drafts/

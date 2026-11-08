@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this code or these results, please cite the preprint (and this archive)."
+title: "connectome-noise-ceiling: model-prediction replicability across Drosophila connectomes and the error budget for reconstruction"
+authors:
+  - family-names: Switzer
+    given-names: Willa
+    affiliation: Harvey Mudd College
+version: 1.0.0
+date-released: 2026-11-23
+license: MIT
+repository-code: "https://github.com/willaswitzer/connectome-noise-ceiling"
+keywords:
+  - connectomics
+  - Drosophila
+  - FlyWire
+  - brain emulation
+  - noise floor
